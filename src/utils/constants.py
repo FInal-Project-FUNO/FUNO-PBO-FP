@@ -5,7 +5,7 @@ Game constants and configuration settings
 import os
 
 # Base folder for assets
-ASSET_DIR = r"E:\Coding\Python\PBO\FUNO-PBO-FP\assests\card"
+ASSET_DIR = r"C:\Users\Royan\Documents\Semester 3\PBO\FUNO-PBO-FP\assests\card"
 
 # Card image paths
 CARD_IMAGES = {
