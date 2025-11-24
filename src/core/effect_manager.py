@@ -1,3 +1,4 @@
+from src.utils import *
 """
 Effect Manager - Polymorphism: Different effects for different card types
 """

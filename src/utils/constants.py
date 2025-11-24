@@ -5,7 +5,7 @@ Game constants and configuration settings
 import os
 
 # Base folder for assets
-ASSET_DIR = r"C:\Users\Royan\Documents\Semester 3\PBO\FUNO-PBO-FP\assests\card"
+ASSET_DIR = r"E:\Coding\Python\PBO\FUNO-PBO-FP\assests\card"
 
 # Card image paths
 CARD_IMAGES = {
@@ -50,6 +50,19 @@ CARD_IMAGES = {
     "yell_7": os.path.join(ASSET_DIR, "yell_7.png"),
     "yell_8": os.path.join(ASSET_DIR, "yell_8.png"),
     "yell_9": os.path.join(ASSET_DIR, "yell_9.png"),
+    "blue_p2": os.path.join(ASSET_DIR, "blue_p2.png"),
+    "green_p2": os.path.join(ASSET_DIR, "green_p2.png"),
+    "red_p2": os.path.join(ASSET_DIR, "red_p2.png"),
+    "yell_p2": os.path.join(ASSET_DIR, "yell_p2.png"),
+    "blue_reverse": os.path.join(ASSET_DIR, "blue_reverse.png"),
+    "green_reverse": os.path.join(ASSET_DIR, "green_reverse.png"),
+    "red_reverse": os.path.join(ASSET_DIR, "red_reverse.png"),
+    "yell_reverse": os.path.join(ASSET_DIR, "yell_reverse.png"),
+    "blue_skip": os.path.join(ASSET_DIR, "blue_skip.png"),
+    "green_skip": os.path.join(ASSET_DIR, "green_skip.png"),
+    "red_skip": os.path.join(ASSET_DIR, "red_skip.png"),
+    "yell_skip": os.path.join(ASSET_DIR, "yell_skip.png"),
+    "wildcard": os.path.join(ASSET_DIR, "wildcard.png")
 }
 
 # Screen settings
@@ -72,15 +85,15 @@ CARD_WIDTH = 128
 CARD_HEIGHT = 128
 CARD_COLORS = ['red', 'green', 'blue', 'yell']
 CARD_VALUES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-SPECIAL_CARDS = ['Skip', 'Reverse', '+2']
+SPECIAL_CARDS = ['skip', 'reverse', 'p2']
 WILD_CARDS = ['Wild', 'Wild+4']
 
 # Card points
 CARD_POINTS = {
     '0': 0, '1': 1, '2': 2, '3': 3, '4': 4,
     '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
-    'Skip': 20, 'Reverse': 20, '+2': 20,
-    'Wild': 50, 'Wild+4': 50
+    'skip': 20, 'reverse': 20, 'p2': 20,
+    'Wild': 50
 }
 
 # Game settings

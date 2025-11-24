@@ -112,8 +112,14 @@ def main():
         for i in range(ai_cards_count):
             card_x = 50 + i * (CARD_WIDTH + 10)
             card_y = 30
-            pygame.draw.rect(screen, COLOR_GRAY, (card_x, card_y, CARD_WIDTH, CARD_HEIGHT))
-            pygame.draw.rect(screen, COLOR_BLACK, (card_x, card_y, CARD_WIDTH, CARD_HEIGHT), 3)
+            
+            back_image = LOADED_CARDS.get("back")
+            if back_image:
+                screen.blit(back_image, (card_x, card_y))
+            else:
+                # fallback kalau gambar back tidak ada
+                pygame.draw.rect(screen, COLOR_GRAY, (card_x, card_y, CARD_WIDTH, CARD_HEIGHT))
+                pygame.draw.rect(screen, COLOR_BLACK, (card_x, card_y, CARD_WIDTH, CARD_HEIGHT), 3)
         
         # Draw scores
         player_score_text = font.render(f"Your Score: {game.player.score}", True, COLOR_WHITE)
