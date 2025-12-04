@@ -1,6 +1,5 @@
 """
 Main game loop - Entry point
-This is a simplified version showing the structure
 """
 
 import pygame
