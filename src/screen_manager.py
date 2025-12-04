@@ -1,31 +1,24 @@
-from .screens.main_menu import MainMenuScreen
-from .screens.game_screen import GameScreen
-from .screens.high_score_screen import HighScoreScreen
+from src.screen.game_screen import GameScreen
+# from src.screens.menu_screen import MenuScreen
 
 class ScreenManager:
-    def __init__(self, screen_size):
-        self.screen_size = screen_size
-        self.screens = {}
+    def __init__(self):
         self.current_screen = None
+    
+    def set_screen(self, screen_type):
+        if screen_type == 'GAME':
+            self.current_screen = GameScreen(self)
+        # elif screen_type == 'MENU':
+        #     self.current_screen = MenuScreen(self)
 
-        self._register_screens()
+    def handle_events(self, event):
+        if self.current_screen:
+            self.current_screen.handle_events(event)
 
-    def _register_screens(self):
-        self.screens["main_menu"] = MainMenuScreen(self, self.screen_size)
-        self.screens["game"] = GameScreen(self, self.screen_size)
-        self.screens["high_score"] = HighScoreScreen(self, self.screen_size)
-
-        # Screen awal
-        self.go_to("main_menu")
-
-    def go_to(self, name):
-        self.current_screen = self.screens[name]
-
-    def handle_event(self, event):
-        self.current_screen.handle_event(event)
-
-    def update(self, dt):
-        self.current_screen.update(dt)
+    def update(self, delta_time):
+        if self.current_screen:
+            self.current_screen.update(delta_time)
 
     def draw(self, surface):
-        self.current_screen.draw(surface)
+        if self.current_screen:
+            self.current_screen.draw(surface)

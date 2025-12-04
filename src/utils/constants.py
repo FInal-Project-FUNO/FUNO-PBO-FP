@@ -63,8 +63,8 @@ CARD_IMAGES = {
     "green_skip": os.path.join(ASSET_DIR, "card","green_skip.png"),
     "red_skip": os.path.join(ASSET_DIR, "card","red_skip.png"),
     "yell_skip": os.path.join(ASSET_DIR, "card","yell_skip.png"),
-    "wildcard": os.path.join(ASSET_DIR, "card","wildcard.png"), 
-    "plus_4": os.path.join(ASSET_DIR, "card","p4.png")
+    "wild_wild": os.path.join(ASSET_DIR, "card","wildcard.png"), 
+    "p4_p4": os.path.join(ASSET_DIR, "card","p4.png")
 }
 
 #Decks image
