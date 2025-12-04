@@ -17,23 +17,20 @@ class Deck:
     
     def __build_deck(self):
         """Build a complete UNO deck"""
-        # Number cards (0: 1 per color, 1-9: 2 per color)
+        # Number cards (0: 1 per color, 1-9: 1 per color)
         for color in CARD_COLORS:
-            self.__cards.append(Card(color, '0'))
-            for value in CARD_VALUES[1:]:
-                self.__cards.append(Card(color, value))
+            for value in CARD_VALUES[0:]:
                 self.__cards.append(Card(color, value))
         
-        # Special cards (2 per color)
+        # Special cards (1 per color)
         for color in CARD_COLORS:
             for special in SPECIAL_CARDS:
                 self.__cards.append(Card(color, special))
-                self.__cards.append(Card(color, special))
         
-        # Wild cards (4 of each)
-        for _ in range(4):
-            self.__cards.append(Card('Wild', 'Wild'))
-            self.__cards.append(Card('Wild', 'Wild+4'))
+        # Wild cards (2 of each)
+        for _ in range(2):
+            self.__cards.append(Card('wildcard', 'wild'))
+            self.__cards.append(Card('plus_4', 'p4'))
     
     def shuffle(self):
         """Shuffle the deck"""
