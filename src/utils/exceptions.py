@@ -12,12 +12,14 @@ class InvalidMoveError(FunoException):
         self.message = message
         super().__init__(self.message)
 
+'''ini apa cok'''
 class EmptyDeckError(FunoException):
     """Raised when deck is empty"""
     def __init__(self, message="Deck is empty"):
         self.message = message
         super().__init__(self.message)
 
+'''wym card invalid'''
 class InvalidCardError(FunoException):
     """Raised when card is invalid"""
     def __init__(self, message="Invalid card"):

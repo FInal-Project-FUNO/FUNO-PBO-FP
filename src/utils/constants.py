@@ -9,7 +9,7 @@ ASSET_DIR = r"C:\Users\Royan\Documents\Semester 3\PBO\FUNO-PBO-FP\assests\card"
 
 # Card image paths
 CARD_IMAGES = {
-    "back": os.path.join(ASSET_DIR, "back_card_funo.png"),
+    "back": os.path.join(ASSET_DIR, "back_card.png"),
     "blue_0": os.path.join(ASSET_DIR, "blue_0.png"),
     "blue_1": os.path.join(ASSET_DIR, "blue_1.png"),
     "blue_2": os.path.join(ASSET_DIR, "blue_2.png"),
@@ -62,12 +62,13 @@ CARD_IMAGES = {
     "green_skip": os.path.join(ASSET_DIR, "green_skip.png"),
     "red_skip": os.path.join(ASSET_DIR, "red_skip.png"),
     "yell_skip": os.path.join(ASSET_DIR, "yell_skip.png"),
-    "wildcard": os.path.join(ASSET_DIR, "wildcard.png")
+    "wildcard": os.path.join(ASSET_DIR, "wildcard.png"), 
+    "plus_4": os.path.join(ASSET_DIR, "p4.png")
 }
 
 # Screen settings
-SCREEN_WIDTH = 1200
-SCREEN_HEIGHT = 800
+SCREEN_WIDTH = 1280
+SCREEN_HEIGHT = 720
 FPS = 60
 
 # Colors (RGB)
@@ -86,16 +87,14 @@ CARD_HEIGHT = 128
 CARD_COLORS = ['red', 'green', 'blue', 'yell']
 CARD_VALUES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 SPECIAL_CARDS = ['skip', 'reverse', 'p2']
-WILD_CARDS = ['Wild', 'Wild+4']
+WILD_CARDS = ['Wild', 'p4']
 
 # Card points
 CARD_POINTS = {
     '0': 0, '1': 1, '2': 2, '3': 3, '4': 4,
-    '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
-    'skip': 20, 'reverse': 20, 'p2': 20,
-    'Wild': 50
+    '5': 5, '6': 6, '7': 7, '8': 8, '9': 9
 }
 
 # Game settings
-INITIAL_CARDS = 7
-AI_DELAY = 10.0  # seconds
+INITIAL_CARDS = 5
+AI_DELAY = 2.5  # seconds

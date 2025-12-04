@@ -7,7 +7,7 @@ import pygame
 import sys
 from src.core import *
 from src.utils import *
-from .game_manager import GameManager
+from src.core.game_manager import GameManager
 
 # Initialize Pygame
 pygame.init()
