@@ -24,13 +24,14 @@ class Deck:
         
         # Special cards (1 per color)
         for color in CARD_COLORS:
+            self.__cards.append(Card(color, 'p2'))
             for special in SPECIAL_CARDS:
                 self.__cards.append(Card(color, special))
         
         # Wild cards (2 of each)
-        for _ in range(2):
-            self.__cards.append(Card('wildcard', 'wild'))
-            self.__cards.append(Card('plus_4', 'p4'))
+        for color in WILD_CARDS:
+            self.__cards.append(Card(color, color))
+            self.__cards.append(Card(color, color))
     
     def shuffle(self):
         """Shuffle the deck"""
@@ -61,3 +62,7 @@ class Deck:
     def __len__(self):
         """Return deck size"""
         return len(self.__cards)
+    
+if __name__ == "__main__":
+    deck1 = Deck()
+    print(len(deck1))
