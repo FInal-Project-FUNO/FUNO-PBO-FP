@@ -20,7 +20,7 @@ class AIPlayer(Player):
         """
         super().__init__(name)
         self.__difficulty = difficulty
-        self.__last_move_time = 0
+        self.__last_move_time = time.time()
     
     def choose_card(self, main_card):
         """

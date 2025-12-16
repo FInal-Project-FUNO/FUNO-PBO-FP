@@ -57,6 +57,12 @@ class GameScreen(BaseScreen):
             f"{color} {value}"
         ]
 
+        if value in ['wild', 'p4']:
+            if value == 'wild':
+                key_variants.append("wild_wild") # Paksa cari key 'wild_wild'
+            elif value == 'p4':
+                key_variants.append("p4_p4")
+        
         image = None
         for key in key_variants:
             if key in self.loaded_cards:
@@ -83,22 +89,28 @@ class GameScreen(BaseScreen):
             
             # Cek kartu pemain
             player_cards = self.game.player.hand
-            for i, card in enumerate(player_cards):
-                card_x = 50 + i * (CARD_WIDTH + 10)
-                card_y = SCREEN_HEIGHT - CARD_HEIGHT - 50
-                
-                # Deteksi area klik
-                if (card_x <= mouse_x <= card_x + CARD_WIDTH and
-                    card_y <= mouse_y <= card_y + CARD_HEIGHT):
-                    
-                    try:
-                        # Panggil play_card via self.game
-                        self.game.play_card(self.game.player, card)
-                        self.selected_card_index = None
-                    except Exception as e: # Tangkap error invalid move
-                        # Akses private attribute message secara aman atau via property jika ada
-                        # Di sini kita anggap property 'message' ada di GameManager
-                        pass # Pesan error bisa disimpan di self.game.message
+            num_cards = len(player_cards)
+        
+            if num_cards > 0:
+                card_spacing = 100
+                start_x = (SCREEN_WIDTH -750)
+                for i, card in enumerate(player_cards):
+                    card_x = start_x + (i * card_spacing)
+                    card_y = SCREEN_HEIGHT - CARD_HEIGHT - 25
+                    # Deteksi area klik
+                    if (card_x <= mouse_x <= card_x + CARD_WIDTH and
+                        card_y <= mouse_y <= card_y + CARD_HEIGHT):
+                        
+                        
+                        
+                        try:
+                            # Panggil play_card via self.game
+                            self.game.play_card(self.game.player, card)
+                            self.selected_card_index = None
+                        except Exception as e: # Tangkap error invalid move
+                            # Akses private attribute message secara aman atau via property jika ada
+                            # Di sini kita anggap property 'message' ada di GameManager
+                            pass # Pesan error bisa disimpan di self.game.message
 
         # Deteksi Tombol Escape untuk keluar/restart saat game over
         if event.type == pygame.KEYDOWN:
@@ -118,7 +130,6 @@ class GameScreen(BaseScreen):
             if current_time - self.animation_start_time > 700: # 1000 + 500
                 self.animation_state = "IDLE"  # Selesai, tampilkan kartu baru
                 self.input_locked = False      # Buka kunci input
-                print("unlock")
         
         if not self.game.game_over and not self.input_locked:
             self.game.update_ai()
@@ -187,17 +198,14 @@ class GameScreen(BaseScreen):
                     self.draw_card_image(surface, self.game.main_card, main_x, main_y)
                 if self.slot_image:
                     surface.blit(self.slot_image, (played_x, main_y))
-                
-
-            
+                    
         # 3. Draw Player Cards
         player_cards = self.game.player.hand
         num_cards = len(player_cards)
         
         if num_cards > 0:
             card_spacing = 100
-            total_hand_width = ((num_cards - 1) * card_spacing) + CARD_WIDTH
-            start_x = (SCREEN_WIDTH - total_hand_width) // 2
+            start_x = (SCREEN_WIDTH -750)
             for i, card in enumerate(player_cards):
                 card_x = start_x + (i * card_spacing)
                 card_y = SCREEN_HEIGHT - CARD_HEIGHT - 25
@@ -207,7 +215,7 @@ class GameScreen(BaseScreen):
         ai_cards_count = self.game.ai.hand_size()
         if ai_cards_count > 0:
             card_spacing = 50
-            start_x = (SCREEN_WIDTH) - 630
+            start_x = (SCREEN_WIDTH) - 650
             for i in range(ai_cards_count):
                 card_x = start_x + (i * card_spacing)
                 card_y = 25
@@ -252,3 +260,6 @@ class GameScreen(BaseScreen):
             surface.blit(winner_text, (center_x - winner_text.get_width()//2, 250))
             surface.blit(final_score, (center_x - final_score.get_width()//2, 350))
             surface.blit(restart_text, (center_x - restart_text.get_width()//2, 450))
+    
+        state_text = self.small_font.render(f"DEBUG STATE: {self.animation_state}", True, COLOR_YELLOW)
+        surface.blit(state_text, (15, 15))
