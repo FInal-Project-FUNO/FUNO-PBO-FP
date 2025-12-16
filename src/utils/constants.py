@@ -103,7 +103,14 @@ WILD_CARDS = ['wild', 'p4']
 # Card points (bisa diganti pake int(value) ntaran)
 CARD_POINTS = {
     '0': 0, '1': 1, '2': 2, '3': 3, '4': 4,
-    '5': 5, '6': 6, '7': 7, '8': 8, '9': 9
+    '5': 5, '6': 6, '7': 7, '8': 8, '9': 9,
+    
+    # Semua kartu spesial nilai dasar simbolnya 10
+    'skip': 10,
+    'reverse': 10,
+    'p2': 10,
+    'wild': 10,
+    'p4': 10
 }
 
 #font
@@ -111,4 +118,4 @@ FONT_PATH = os.path.join(ASSET_DIR, "fonts", "Pix32.ttf")
 
 # Game settings
 INITIAL_CARDS = 5
-AI_DELAY = 3  # seconds
+AI_DELAY = 100  # seconds
