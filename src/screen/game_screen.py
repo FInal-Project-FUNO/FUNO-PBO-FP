@@ -11,8 +11,8 @@ class GameScreen(BaseScreen):
         self.game = GameManager() 
         
         # 2. Inisialisasi Font
-        self.font = pygame.font.Font(None, 36)
-        self.small_font = pygame.font.Font(None, 24)
+        self.font = pygame.font.Font(FONT_PATH, 36)
+        self.small_font = pygame.font.Font(FONT_PATH, 24)
         
         # 3. Load Assets (Pindahan dari main.py)
         self.loaded_cards = {}
@@ -97,13 +97,13 @@ class GameScreen(BaseScreen):
         # 1. Draw Deck (Animasi)
         cards_left = self.game.deck.cards_remaining()
         # Posisi deck
-        deck_x = SCREEN_WIDTH - 150
-        deck_y = SCREEN_HEIGHT // 2
+        deck_x = SCREEN_WIDTH - 820
+        deck_y = SCREEN_HEIGHT - 350
         load_deck(surface, deck_x, deck_y, cards_left)
         
         # Text jumlah deck
-        deck_text = self.small_font.render(f"Deck: {cards_left}", True, COLOR_WHITE)
-        surface.blit(deck_text, (deck_x, deck_y + CARD_HEIGHT + 10))
+        deck_text = self.small_font.render(f"{cards_left}", True, COLOR_WHITE)
+        surface.blit(deck_text, (deck_x + 50, deck_y + CARD_HEIGHT + 10))
 
         # 2. Draw Main Card
         if self.game.main_card:
@@ -111,15 +111,19 @@ class GameScreen(BaseScreen):
             main_y = SCREEN_HEIGHT // 2 - CARD_HEIGHT // 2
             self.draw_card_image(surface, self.game.main_card, main_x, main_y)
             
-            label = self.small_font.render("MAIN CARD", True, COLOR_WHITE)
-            surface.blit(label, (main_x, main_y - 30))
 
         # 3. Draw Player Cards
         player_cards = self.game.player.hand
-        for i, card in enumerate(player_cards):
-            card_x = 50 + i * (CARD_WIDTH + 10)
-            card_y = SCREEN_HEIGHT - CARD_HEIGHT - 50
-            self.draw_card_image(surface, card, card_x, card_y, i == self.selected_card_index)
+        num_cards = len(player_cards)
+        
+        if num_cards > 0:
+            card_spacing = 100
+            total_hand_width = ((num_cards - 1) * card_spacing) + CARD_WIDTH
+            start_x = (SCREEN_WIDTH - total_hand_width) // 2
+            for i, card in enumerate(player_cards):
+                card_x = start_x + (i * card_spacing)
+                card_y = SCREEN_HEIGHT - CARD_HEIGHT - 25
+                self.draw_card_image(surface, card, card_x, card_y, i == self.selected_card_index)
 
         # 4. Draw AI Cards (Backside)
         ai_cards_count = self.game.ai.hand_size()

@@ -8,8 +8,8 @@ from ..ui.components import Button
 class MainMenu(BaseScreen):
     def __init__(self, manager):
         super().__init__(manager)
-        self.font_title = pygame.font.Font(None, 80)
-        self.font_button = pygame.font.Font(None, 40)
+        self.font_title = pygame.font.Font(FONT_PATH, 60)
+        self.font_button = pygame.font.Font(FONT_PATH, 30)
         
         # Posisi Tengah Layar
         center_x = SCREEN_WIDTH // 2
@@ -21,13 +21,13 @@ class MainMenu(BaseScreen):
         # Inisialisasi Tombol dengan Callback Action
         self.buttons = [
             Button(center_x - btn_width//2, start_y, btn_width, btn_height, 
-                   "PLAY", self.font_button, self.action_play),
+                   "Play", self.font_button, self.action_play),
             
             Button(center_x - btn_width//2, start_y + gap, btn_width, btn_height, 
-                   "DIFFICULTY", self.font_button, self.action_difficulty),
+                   "Difficulty", self.font_button, self.action_difficulty),
             
             Button(center_x - btn_width//2, start_y + gap*2, btn_width, btn_height, 
-                   "EXIT", self.font_button, self.action_exit)
+                   "Exit", self.font_button, self.action_exit)
         ]
 
     # --- Actions / Callbacks ---

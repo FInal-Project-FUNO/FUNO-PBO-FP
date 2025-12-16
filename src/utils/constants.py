@@ -103,6 +103,9 @@ CARD_POINTS = {
     '5': 5, '6': 6, '7': 7, '8': 8, '9': 9
 }
 
+#font
+FONT_PATH = os.path.join(ASSET_DIR, "fonts", "Pix32.ttf")
+
 # Game settings
 INITIAL_CARDS = 5
 AI_DELAY = 2.5  # seconds
