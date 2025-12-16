@@ -20,13 +20,29 @@ class GameScreen(BaseScreen):
         
         # Variabel state
         self.selected_card_index = None
+        
+        # --- STATE ANIMASI ---
+        self.animation_state = "IDLE"  # Pilihan: IDLE, SHOW_MATCH, CLEAR
+        self.animation_start_time = 0
+        self.input_locked = False      # Kunci input saat animasi jalan
+        
+        # Snapshot Visual (Untuk menyimpan gambar kartu lama)
+        self.vis_main_card = None      # Kartu Main SEBELUM berubah
+        self.vis_played_card = None    # Kartu yang BARU dimainkan
+        
+        # Variabel pembanding untuk deteksi perubahan
+        self.last_seen_played_card = None 
+        # Kita simpan main card frame sebelumnya untuk snapshot
+        self.prev_main_card_snapshot = self.game.main_card
 
     def _load_assets(self):
         """Memuat semua gambar kartu"""
         for name, path in CARD_IMAGES.items():
             try:
                 img = pygame.image.load(path)
+                slot_img = pygame.image.load(SLOT_PATH).convert_alpha()
                 self.loaded_cards[name] = pygame.transform.scale(img, (CARD_WIDTH, CARD_HEIGHT))
+                self.slot_image = pygame.transform.scale(slot_img, (CARD_WIDTH, CARD_HEIGHT))
             except FileNotFoundError:
                 print(f"[WARNING] File tidak ditemukan: {path}")
 
@@ -59,6 +75,8 @@ class GameScreen(BaseScreen):
             surface.blit(image, rect)
 
     def handle_events(self, event):
+        if self.input_locked:
+            return
         # Deteksi Klik Mouse
         if event.type == pygame.MOUSEBUTTONDOWN and not self.game.game_over:
             mouse_x, mouse_y = event.pos
@@ -88,8 +106,52 @@ class GameScreen(BaseScreen):
                 self.manager.set_screen('MENU') # Kembali ke menu
 
     def update(self, delta_time):
-        if not self.game.game_over:
+        current_time = pygame.time.get_ticks()
+        
+        if self.animation_state == "SHOW_MATCH":
+            # Tampilkan match selama 1 detik (1000ms)
+            if current_time - self.animation_start_time > 500:
+                self.animation_state = "CLEAR" # Pindah ke fase kosong
+                
+        elif self.animation_state == "CLEAR":
+            # Kosongkan meja selama 0.5 detik (500ms)
+            if current_time - self.animation_start_time > 700: # 1000 + 500
+                self.animation_state = "IDLE"  # Selesai, tampilkan kartu baru
+                self.input_locked = False      # Buka kunci input
+                print("unlock")
+        
+        if not self.game.game_over and not self.input_locked:
             self.game.update_ai()
+            
+            current_last_played = self.game.last_played_card
+            
+            if current_last_played != self.last_seen_played_card:
+                # Wow, ada pergerakan baru!
+                
+                # Gunakan snapshot main card frame sebelumnya (Kartu Target Lama)
+                old_main = self.prev_main_card_snapshot
+                
+                # Mulai animasi
+                self._start_transition_animation(old_main, current_last_played)
+                
+                # Update pembanding
+                self.last_seen_played_card = current_last_played
+            
+            # Simpan snapshot main card saat ini untuk frame berikutnya
+            self.prev_main_card_snapshot = self.game.main_card
+            
+        if self.input_locked:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_WAIT)
+        else:
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+            
+    def _start_transition_animation(self, old_main, played_card):
+        """Memulai urutan animasi visual"""
+        self.animation_state = "SHOW_MATCH"
+        self.vis_main_card = old_main      # Simpan kartu main yang LAMA
+        self.vis_played_card = played_card # Simpan kartu yang dimainkan
+        self.animation_start_time = pygame.time.get_ticks()
+        self.input_locked = True           # Kunci input agar player tidak klik sembarangan
 
     def draw(self, surface):
         surface.fill(COLOR_BG)
@@ -107,11 +169,27 @@ class GameScreen(BaseScreen):
 
         # 2. Draw Main Card
         if self.game.main_card:
-            main_x = SCREEN_WIDTH // 2 - CARD_WIDTH // 2
+            main_x = SCREEN_WIDTH // 2 - CARD_WIDTH
             main_y = SCREEN_HEIGHT // 2 - CARD_HEIGHT // 2
-            self.draw_card_image(surface, self.game.main_card, main_x, main_y)
+            played_x = main_x + 100
             
+            if self.animation_state == "SHOW_MATCH":
+                if self.vis_main_card:
+                    self.draw_card_image(surface, self.vis_main_card, main_x, main_y)
+                if self.vis_played_card:
+                    self.draw_card_image(surface, self.vis_played_card, played_x, main_y)
+                    
+            elif self.animation_state == "CLEAR":
+                pass
+            
+            elif self.animation_state == "IDLE":
+                if self.game.main_card:
+                    self.draw_card_image(surface, self.game.main_card, main_x, main_y)
+                if self.slot_image:
+                    surface.blit(self.slot_image, (played_x, main_y))
+                
 
+            
         # 3. Draw Player Cards
         player_cards = self.game.player.hand
         num_cards = len(player_cards)
@@ -127,15 +205,18 @@ class GameScreen(BaseScreen):
 
         # 4. Draw AI Cards (Backside)
         ai_cards_count = self.game.ai.hand_size()
-        for i in range(ai_cards_count):
-            card_x = 50 + i * (CARD_WIDTH + 10)
-            card_y = 30
-            
-            back_image = self.loaded_cards.get("back")
-            if back_image:
-                surface.blit(back_image, (card_x, card_y))
-            else:
-                pygame.draw.rect(surface, COLOR_GRAY, (card_x, card_y, CARD_WIDTH, CARD_HEIGHT))
+        if ai_cards_count > 0:
+            card_spacing = 50
+            start_x = (SCREEN_WIDTH) - 630
+            for i in range(ai_cards_count):
+                card_x = start_x + (i * card_spacing)
+                card_y = 25
+                
+                back_image = self.loaded_cards.get("back")
+                if back_image:
+                    surface.blit(back_image, (card_x, card_y))
+                else:
+                    pygame.draw.rect(surface, COLOR_GRAY, (card_x, card_y, CARD_WIDTH, CARD_HEIGHT))
 
         # 5. Draw Scores
         player_score = self.font.render(f"Your Score: {self.game.player.score}", True, COLOR_WHITE)

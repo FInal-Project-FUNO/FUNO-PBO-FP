@@ -72,6 +72,9 @@ DECK_IMAGES = os.path.join(ASSET_DIR, "deck", "decks_funo.png")
 DECK_FRAMES_COUNT = 5
 MAX_DECK_SIZE = 60
 
+SLOT_PATH = os.path.join("assests", "ui", "slot.png")
+
+
 # Screen settings
 SCREEN_WIDTH = 960
 SCREEN_HEIGHT = 540
@@ -108,4 +111,4 @@ FONT_PATH = os.path.join(ASSET_DIR, "fonts", "Pix32.ttf")
 
 # Game settings
 INITIAL_CARDS = 5
-AI_DELAY = 2.5  # seconds
+AI_DELAY = 10  # seconds

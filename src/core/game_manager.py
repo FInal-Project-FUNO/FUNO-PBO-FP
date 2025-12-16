@@ -13,12 +13,13 @@ class GameManager:
         """Initialize game manager"""
         self.__deck = Deck()
         self.__player = Player("Player")
-        self.__ai = AIPlayer("AI", "medium")
+        self.__ai = AIPlayer("AI", "easy")
         self.__main_card = None
         self.__effect_manager = EffectManager()
         self.__game_over = False
         self.__winner = None
         self.__message = ""
+        self.__last_played_card = None
         
         # Deal initial cards
         self.__deal_initial_cards()
@@ -62,6 +63,11 @@ class GameManager:
         """Get game message"""
         return self.__message
     
+    @property
+    def last_played_card(self):
+        """Get the last card played by player or AI"""
+        return self.__last_played_card
+    
     def __deal_initial_cards(self):
         """Deal initial cards to players"""
         for _ in range(INITIAL_CARDS):
@@ -99,6 +105,8 @@ class GameManager:
         # Remove card from player's hand
         if not player.remove_card(card):
             raise InvalidCardError("Card not in player's hand")
+        
+        self.__last_played_card = card
         
         # Add points
         player.add_points(card.points)
