@@ -1,15 +1,18 @@
-from src.screen.game_screen import GameScreen
-# from src.screens.menu_screen import MenuScreen
+from src.screen import *
+from src.ui import *
+from src.core.game_manager import GameManager
 
 class ScreenManager:
     def __init__(self):
         self.current_screen = None
     
     def set_screen(self, screen_type):
-        if screen_type == 'GAME':
+        if screen_type == 'MENU':
+            self.current_screen = MainMenu(self) # <--- Tambah ini
+        elif screen_type == 'GAME':
             self.current_screen = GameScreen(self)
-        # elif screen_type == 'MENU':
-        #     self.current_screen = MenuScreen(self)
+        # elif screen_type == 'DIFFICULTY':
+        #     self.current_screen = DifficultyScreen(self)
 
     def handle_events(self, event):
         if self.current_screen:

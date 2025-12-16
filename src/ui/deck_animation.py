@@ -35,9 +35,8 @@ def load_deck_sprites(sheet_path, num_frames):
         return []
 
 # --- LOAD SPRITES DI TINGKAT GLOBAL ---
-# Panggil fungsi ini di luar loop main() agar hanya diload sekali
-deck_frames = load_deck_sprites(DECK_IMAGES, 5) # Asumsi DECK_IMAGES dari constants sudah dipath ke file png
-    
+deck_frames = []
+has_tried_loading = False    
 DECK_SURFACE = None
 try:
     img = pygame.image.load(DECK_IMAGES)
@@ -47,22 +46,19 @@ except (FileNotFoundError, NameError) as e:
     
 def load_deck(surface, x, y, current_cards_count):
     """Draw deck image to game screen"""
-# Cek apakah sprite berhasil di-load
+    global deck_frames, has_tried_loading
+    if not deck_frames and not has_tried_loading:
+        deck_frames = load_deck_sprites(DECK_IMAGES, 5)
+        has_tried_loading = True
+        
     if not deck_frames:
-        # Fallback: gambar kotak biasa jika gambar gagal load
         pygame.draw.rect(surface, COLOR_GRAY, (x, y, CARD_WIDTH, CARD_HEIGHT))
         return
 
-    # 1. Tentukan frame mana yang dipakai
     frame_index = get_deck_frame_index(current_cards_count, MAX_DECK_SIZE)
-    
-    # 2. Ambil gambarnya
     image = deck_frames[frame_index]
-    
-    # 3. Gambar ke layar
     rect = image.get_rect(topleft=(x, y))
     surface.blit(image, rect)
-# src/main.py
 
 def get_deck_frame_index(current_count, max_count=60):
     """
