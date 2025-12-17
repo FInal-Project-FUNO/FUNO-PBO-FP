@@ -54,9 +54,8 @@ class MainMenu(BaseScreen):
 
     def draw(self, surface):
         # surface.fill(COLOR_BG) # Background
-        background_path = os.path.join("assests", "ui", "mockup540.png")
-        background = pygame.image.load(background_path)
-        surface.blit(background, (0, 0))
+        menu = pygame.image.load(MENU_PATH).convert()
+        surface.blit(menu, (0, 0))
 
         # 1. Draw Title
         title_path = os.path.join("assests", "ui", "title.png")

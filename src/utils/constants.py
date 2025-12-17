@@ -67,12 +67,18 @@ CARD_IMAGES = {
     "p4_p4": os.path.join(ASSET_DIR, "card","p4.png")
 }
 
+#Main Menu
+MENU_PATH = os.path.join(ASSET_DIR, "ui", "mockup540.png")
+
+
 #Decks image
 DECK_IMAGES = os.path.join(ASSET_DIR, "deck", "decks_funo.png")
 DECK_FRAMES_COUNT = 5
 MAX_DECK_SIZE = 60
 
-SLOT_PATH = os.path.join("assests", "ui", "slot.png")
+#Game_screen
+SLOT_PATH = os.path.join(ASSET_DIR, "ui", "slot.png")
+BACKGROUND_PATH = os.path.join(ASSET_DIR, "ui", "game_screen.png")
 
 
 # Screen settings

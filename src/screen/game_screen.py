@@ -52,10 +52,13 @@ class GameScreen(BaseScreen):
         """Memuat semua gambar kartu"""
         for name, path in CARD_IMAGES.items():
             try:
+                game_img = pygame.image.load(BACKGROUND_PATH).convert()
                 img = pygame.image.load(path)
                 slot_img = pygame.image.load(SLOT_PATH).convert_alpha()
                 self.loaded_cards[name] = pygame.transform.scale(img, (CARD_WIDTH, CARD_HEIGHT))
                 self.slot_image = pygame.transform.scale(slot_img, (CARD_WIDTH, CARD_HEIGHT))
+                self.background_image = pygame.transform.scale(game_img, (SCREEN_WIDTH, SCREEN_HEIGHT))     
+
             except FileNotFoundError:
                 print(f"[WARNING] File tidak ditemukan: {path}")
 
@@ -111,7 +114,7 @@ class GameScreen(BaseScreen):
                         if color_name in available_colors:
                             # EKSEKUSI FINAL: Mainkan kartu dengan warna pilihan
                             try:
-                                self.game.play_card(self.game.player, self.pending_wild_card, color_name)
+                                self.game.resolve_wild_color(color_name)
                                 self.selected_card_index = None
                             except Exception as e:
                                 print(f"Error: {e}")
@@ -139,19 +142,13 @@ class GameScreen(BaseScreen):
                     # Deteksi area klik
                     if (card_x <= mouse_x <= card_x + CARD_WIDTH and
                         card_y <= mouse_y <= card_y + CARD_HEIGHT):
-                        if card.value in WILD_CARDS:
-                            # Masuk mode memilih warna
-                            self.pending_wild_card = card
-                            self.is_choosing_color = True
-                        else:
-                            try:
-                                # Panggil play_card via self.game
-                                self.game.play_card(self.game.player, card)
-                                self.selected_card_index = None
-                            except Exception as e: # Tangkap error invalid move
-                                # Akses private attribute message secara aman atau via property jika ada
-                                # Di sini kita anggap property 'message' ada di GameManager
-                                pass # Pesan error bisa disimpan di self.game.message
+                        try:
+                            # Panggil play_card via self.game
+                            self.game.play_card(self.game.player, card)
+                            self.selected_card_index = None
+                        except Exception as e:
+                            pass
+                        break
 
         # Deteksi Tombol Escape untuk keluar/restart saat game over
         if event.type == pygame.KEYDOWN:
@@ -171,7 +168,10 @@ class GameScreen(BaseScreen):
             if current_time - self.animation_start_time > 700: # 1000 + 500
                 self.animation_state = "IDLE"  # Selesai, tampilkan kartu baru
                 self.input_locked = False      # Buka kunci input
-        
+                
+        if self.game.is_waiting_for_color and not self.is_choosing_color:
+            self.is_choosing_color = True
+            
         if not self.game.game_over and not self.input_locked:
             self.game.update_ai()
             
@@ -205,14 +205,14 @@ class GameScreen(BaseScreen):
         self.animation_start_time = pygame.time.get_ticks()
         self.input_locked = True           # Kunci input agar player tidak klik sembarangan
 
-    def draw(self, surface):
-        surface.fill(COLOR_BG)
-        
+    def draw(self, surface):    
+        surface.blit(self.background_image, (0, 0)) 
+          
         # 1. Draw Deck (Animasi)
         cards_left = self.game.deck.cards_remaining()
         # Posisi deck
-        deck_x = SCREEN_WIDTH - 820
-        deck_y = SCREEN_HEIGHT - 350
+        deck_x = SCREEN_WIDTH - 830
+        deck_y = SCREEN_HEIGHT - 345
         load_deck(surface, deck_x, deck_y, cards_left)
         
         # Text jumlah deck

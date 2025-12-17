@@ -20,6 +20,7 @@ class GameManager:
         self.__winner = None
         self.__message = ""
         self.__last_played_card = None
+        self.__waiting_for_color = False
         
         # Deal initial cards
         self.__deal_initial_cards()
@@ -68,6 +69,10 @@ class GameManager:
         """Get the last card played by player or AI"""
         return self.__last_played_card
     
+    @property
+    def is_waiting_for_color(self):
+        return self.__waiting_for_color
+    
     def __deal_initial_cards(self):
             """Deal initial cards to players"""
             for _ in range(INITIAL_CARDS):
@@ -101,6 +106,8 @@ class GameManager:
         if not player.remove_card(card):
             raise InvalidCardError("Card not in player's hand")
         
+        self.__last_played_card = card
+        
         # point system
         points_earned = self.__calculate_dynamic_points(card, self.__main_card)
         player.add_points(points_earned)
@@ -108,6 +115,32 @@ class GameManager:
         # Simpan Main Card yang sedang aktif sebelum diganti
         old_main_card = self.__main_card
         
+        if card.value in WILD_CARDS and chosen_color is None and player == self.__player:
+            self.__waiting_for_color = True
+            self.__message = "Please choose a color..."
+            return
+        
+        self._finalize_turn(player, card, chosen_color, points_earned)
+
+    def resolve_wild_color(self, color):
+        """
+        Lanjutan dari play_card setelah Player memilih warna lewat Overlay.
+        """
+        if not self.__waiting_for_color:
+            return
+
+        # Matikan status waiting
+        self.__waiting_for_color = False
+        
+        # Lanjutkan proses game yang tertunda
+        # Kita ambil kartu terakhir yang dimainkan player
+        card = self.__last_played_card 
+        points = self.__calculate_dynamic_points(card, self.__main_card) # Recalculate or use saved
+        
+        self._finalize_turn(self.__player, card, color, points)
+
+    def _finalize_turn(self, player, card, chosen_color, points_earned):
+        old_main_card = self.__main_card
         try:
             # 3. Masukkan Main Card lama kembali ke deck (Recycle)
             self.__deck.return_card(old_main_card)
@@ -238,6 +271,8 @@ class GameManager:
     
     def update_ai(self):
         """Update AI logic"""
+        if self.__waiting_for_color:
+            return
         if not self.__game_over:
             card = self.__ai.choose_card(self.__main_card)
             if card:
