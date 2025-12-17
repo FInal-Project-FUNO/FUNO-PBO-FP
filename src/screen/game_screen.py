@@ -22,6 +22,19 @@ class GameScreen(BaseScreen):
         self.selected_card_index = None
         
         # --- STATE ANIMASI ---
+        self.is_choosing_color = False
+        self.pending_wild_card = None # Menyimpan kartu Wild yang baru diklik
+        
+        cx, cy = SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2
+        size = 100
+        gap = 20
+        self.color_buttons = {
+            'red':   pygame.Rect(cx - size - gap, cy - size - gap, size, size),
+            'green': pygame.Rect(cx + gap,        cy - size - gap, size, size),
+            'blue':  pygame.Rect(cx - size - gap, cy + gap,        size, size),
+            'yell':  pygame.Rect(cx + gap,        cy + gap,        size, size)
+        }
+        
         self.animation_state = "IDLE"  # Pilihan: IDLE, SHOW_MATCH, CLEAR
         self.animation_start_time = 0
         self.input_locked = False      # Kunci input saat animasi jalan
@@ -83,6 +96,32 @@ class GameScreen(BaseScreen):
     def handle_events(self, event):
         if self.input_locked:
             return
+        
+        # JIKA SEDANG MEMILIH WARNA (Overlay Mode)
+        if self.is_choosing_color:
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mouse_pos = event.pos
+                
+                # Cek warna apa yang diklik
+                available_colors = self._get_player_hand_colors()
+                
+                for color_name, rect in self.color_buttons.items():
+                    if rect.collidepoint(mouse_pos):
+                        # Validasi: Hanya boleh pilih warna yang ada di tangan
+                        if color_name in available_colors:
+                            # EKSEKUSI FINAL: Mainkan kartu dengan warna pilihan
+                            try:
+                                self.game.play_card(self.game.player, self.pending_wild_card, color_name)
+                                self.selected_card_index = None
+                            except Exception as e:
+                                print(f"Error: {e}")
+                            
+                            # Reset State
+                            self.is_choosing_color = False
+                            self.pending_wild_card = None
+                            return
+            return # Jangan lanjut ke logika game biasa        
+        
         # Deteksi Klik Mouse
         if event.type == pygame.MOUSEBUTTONDOWN and not self.game.game_over:
             mouse_x, mouse_y = event.pos
@@ -100,17 +139,19 @@ class GameScreen(BaseScreen):
                     # Deteksi area klik
                     if (card_x <= mouse_x <= card_x + CARD_WIDTH and
                         card_y <= mouse_y <= card_y + CARD_HEIGHT):
-                        
-                        
-                        
-                        try:
-                            # Panggil play_card via self.game
-                            self.game.play_card(self.game.player, card)
-                            self.selected_card_index = None
-                        except Exception as e: # Tangkap error invalid move
-                            # Akses private attribute message secara aman atau via property jika ada
-                            # Di sini kita anggap property 'message' ada di GameManager
-                            pass # Pesan error bisa disimpan di self.game.message
+                        if card.value in WILD_CARDS:
+                            # Masuk mode memilih warna
+                            self.pending_wild_card = card
+                            self.is_choosing_color = True
+                        else:
+                            try:
+                                # Panggil play_card via self.game
+                                self.game.play_card(self.game.player, card)
+                                self.selected_card_index = None
+                            except Exception as e: # Tangkap error invalid move
+                                # Akses private attribute message secara aman atau via property jika ada
+                                # Di sini kita anggap property 'message' ada di GameManager
+                                pass # Pesan error bisa disimpan di self.game.message
 
         # Deteksi Tombol Escape untuk keluar/restart saat game over
         if event.type == pygame.KEYDOWN:
@@ -260,6 +301,57 @@ class GameScreen(BaseScreen):
             surface.blit(winner_text, (center_x - winner_text.get_width()//2, 250))
             surface.blit(final_score, (center_x - final_score.get_width()//2, 350))
             surface.blit(restart_text, (center_x - restart_text.get_width()//2, 450))
-    
+            
+            
+        # --- GAMBAR OVERLAY PEMILIHAN WARNA ---
+        if self.is_choosing_color:
+            # 1. Gelapkan layar belakang
+            overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+            overlay.set_alpha(180)
+            overlay.fill(COLOR_BLACK)
+            surface.blit(overlay, (0, 0))
+            
+            # 2. Teks Judul
+            title = self.font.render("CHOOSE NEXT COLOR", True, COLOR_WHITE)
+            title_rect = title.get_rect(center=(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 150))
+            surface.blit(title, title_rect)
+            
+            # 3. Gambar 4 Kotak Warna
+            available_colors = self._get_player_hand_colors()
+            
+            # Mapping string ke variable warna Pygame
+            color_map = {
+                'red': COLOR_RED, 'green': COLOR_GREEN, 
+                'blue': COLOR_BLUE, 'yell': COLOR_YELLOW
+            }
+            
+            for color_name, rect in self.color_buttons.items():
+                is_available = color_name in available_colors
+                
+                # Tentukan warna (Terang jika available, Gelap/Abu jika tidak)
+                draw_color = color_map[color_name] if is_available else (50, 50, 50)
+                
+                # Gambar Kotak
+                pygame.draw.rect(surface, draw_color, rect, border_radius=15)
+                
+                # Gambar Border (Putih jika available, Hitam jika tidak)
+                border_color = COLOR_WHITE if is_available else COLOR_BLACK
+                pygame.draw.rect(surface, border_color, rect, 3, border_radius=15)
+                
+                # (Opsional) Tanda Silang jika tidak available
+                if not is_available:
+                    pygame.draw.line(surface, border_color, rect.topleft, rect.bottomright, 3)
+                    pygame.draw.line(surface, border_color, rect.bottomleft, rect.topright, 3)
+
+        # ... (Indikator debug dll) ...
         state_text = self.small_font.render(f"DEBUG STATE: {self.animation_state}", True, COLOR_YELLOW)
         surface.blit(state_text, (15, 15))
+        
+    def _get_player_hand_colors(self):
+        """Mendapatkan set warna unik yang dimiliki player saat ini"""
+        colors = set()
+        for card in self.game.player.hand:
+            # Pastikan hanya mengambil warna dasar (bukan wild)
+            if card.color in ['red', 'green', 'blue', 'yell']:
+                colors.add(card.color)
+        return colors

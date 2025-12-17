@@ -88,9 +88,10 @@ class GameManager:
         else:
             self.__main_card = Card('Red', '5') # Fallback
     
-    def play_card(self, player, card):
+    def play_card(self, player, card, chosen_color=None):
         """
         Player plays a card
+        args : choose color for wild card
         """
         # 1. Validasi
         if not card.matches(self.__main_card):
@@ -112,12 +113,20 @@ class GameManager:
             self.__deck.return_card(old_main_card)
             
             # 4. Pemain mengambil 1 kartu baru dari deck (Refill Hand)
-            # Karena ini "Cepat-cepatan", tangan harus selalu diisi ulang selama deck ada
             new_card = self.__deck.draw()
             player.add_card(new_card)
             
             # 5. Update Main Card baru (Cari yang valid)
             self.__update_main_card()
+            
+            if chosen_color:
+                # Jika ada request warna (dari Wild Card), cari Main Card spesifik
+                self.__update_main_card_specific(chosen_color)
+                self.__message = f"{player.name} played {card} & chose {chosen_color}!"
+            else:
+                # Normal update
+                self.__update_main_card()
+                self.__message = f"{player.name} played {card} (+{points_earned} pts)"
             
             # Set pesan sukses
             effect_name = self.__effect_manager.apply_effect(card, self, player)
@@ -129,6 +138,23 @@ class GameManager:
         except EmptyDeckError:
             # Jika deck habis saat proses draw/update, game selesai
             self.__check_game_over()
+    
+    def __update_main_card_specific(self, target_color):
+        """Mencari kartu main baru yang warnanya SESUAI pilihan pemain"""
+        
+        def condition(card):
+            # Syarat: Warna harus sama dengan target & Bukan Wild
+            return (card.color.lower() == target_color.lower()) and (card.value not in WILD_CARDS)
+        
+        # Cari di deck
+        valid_card = self.__deck.draw_valid(condition)
+        
+        if valid_card:
+            self.__main_card = valid_card
+        else:
+            # Fallback: Jika warna yang diminta HABIS di deck, cari apa saja yang valid
+            print(f"[GAME] Warna {target_color} habis! Mengambil kartu acak.")
+            self.__update_main_card()
     
     def __choose_wild_color(self, player):
         """AI chooses color for wild card"""
@@ -189,6 +215,9 @@ class GameManager:
         
         # Cek jenis kartu yang dimainkan (Holding Card)
         val = played_card.value
+
+        if main_card.is_special():
+            return played_card.points
         
         # Aturan d: Kartu +2 dikali 2, Kartu +4 dikali 4
         if val == 'p2': # Draw 2
@@ -200,8 +229,6 @@ class GameManager:
         elif val in ['skip', 'reverse', 'wild']:
             return base_value
             
-        # Aturan c: Kartu angka sesuai besaran simbolnya
-        # (Termasuk jika tidak masuk kondisi di atas)
         else:
             return played_card.points
     
