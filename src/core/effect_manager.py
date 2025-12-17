@@ -26,7 +26,7 @@ class SkipEffect(CardEffect):
     
     def apply_effect(self, game_manager, player):
         """Skip next player's turn (not used in real-time game)"""
-        pass
+        game_manager.execute_skip_effect(player)
     
     def get_effect_name(self):
         return "Skip"
@@ -37,8 +37,8 @@ class ReverseEffect(CardEffect):
     
     def apply_effect(self, game_manager, player):
         """Reverse play direction (not used in 2-player game)"""
-        pass
-    
+        game_manager.execute_reverse_swap(player)    
+        
     def get_effect_name(self):
         return "Reverse"
 
@@ -47,17 +47,10 @@ class DrawTwoEffect(CardEffect):
     """Draw Two card effect"""
     
     def apply_effect(self, game_manager, player):
-        """Force opponent to draw 2 cards"""
-        try:
-            opponent = game_manager.get_opponent(player)
-            for _ in range(2):
-                card = game_manager.deck.draw()
-                opponent.add_card(card)
-        except EmptyDeckError:
-            pass
+        pass
     
     def get_effect_name(self):
-        return "Draw +2"
+        return "point x2"
 
 
 class WildDrawFourEffect(CardEffect):
@@ -65,16 +58,10 @@ class WildDrawFourEffect(CardEffect):
     
     def apply_effect(self, game_manager, player):
         """Force opponent to draw 4 cards"""
-        try:
-            opponent = game_manager.get_opponent(player)
-            for _ in range(4):
-                card = game_manager.deck.draw()
-                opponent.add_card(card)
-        except EmptyDeckError:
-            pass
+        pass
     
     def get_effect_name(self):
-        return "Draw +4"
+        return "point x4"
 
 
 class EffectManager:
@@ -85,8 +72,11 @@ class EffectManager:
         self.__effects = {
             'Skip': SkipEffect(),
             'Reverse': ReverseEffect(),
-            '+2': DrawTwoEffect(),
-            'Wild+4': WildDrawFourEffect()
+            'skip': SkipEffect(),
+            'reverse': ReverseEffect(),
+            'p2': DrawTwoEffect(),
+            'p4': WildDrawFourEffect(),
+            
         }
     
     def apply_effect(self, card, game_manager, player):

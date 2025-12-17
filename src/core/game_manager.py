@@ -33,6 +33,8 @@ class GameManager:
         self.__deal_initial_cards()
         # Set initial main card
         self.__set_initial_main_card()
+        
+        self.__skipped_player = None
     
     # Getters (Encapsulation)
     @property
@@ -112,6 +114,12 @@ class GameManager:
         Player plays a card
         args : choose color for wild card
         """
+        # Jika Player sedang di-skip, tolak langkah (opsional, harusnya dihandle UI juga)
+        if self.__skipped_player == player:
+            # raise InvalidMoveError("You are skipped!") 
+            # Atau return saja
+            return        
+        
         # 1. Validasi
         if not card.matches(self.__main_card):
             raise InvalidMoveError(f"{card} doesn't match {self.__main_card}")
@@ -167,7 +175,7 @@ class GameManager:
                 self.__message_source = 'player'
             else:
                 self.__message_source = 'ai'
-            
+                
             #Update Main Card 
             if chosen_color:
                 # Jika ada request warna (dari Wild Card), cari Main Card spesifik
@@ -177,6 +185,10 @@ class GameManager:
                 # Normal update
                 self.__update_main_card()
                 self.__message = f"{player.name} +{points_earned})"
+            
+            #Reset skipped player setelah giliran selesai
+            if self.__skipped_player:
+                self.__skipped_player = None
             
             # Set effect
             effect_name = self.__effect_manager.apply_effect(card, self, player)
@@ -188,6 +200,34 @@ class GameManager:
         except EmptyDeckError:
             # Jika deck habis saat proses draw/update, game selesai
             self.__check_game_over()
+            
+    def execute_reverse_swap(self, active_player):
+        """Menukar 1 kartu acak antara player dan opponent"""
+        opponent = self.get_opponent(active_player)
+        
+        # Pastikan kedua pihak punya kartu untuk ditukar
+        if active_player.hand_size() > 0 and opponent.hand_size() > 0:
+            # Ambil copy hand (karena property hand mengembalikan copy)
+            p_hand = active_player.hand
+            o_hand = opponent.hand
+            
+            # Pilih kartu acak
+            card_from_player = random.choice(p_hand)
+            card_from_opponent = random.choice(o_hand)
+            
+            # Lakukan pertukaran (Hapus lalu Tambah)
+            active_player.remove_card(card_from_player)
+            opponent.remove_card(card_from_opponent)
+            
+            active_player.add_card(card_from_opponent)
+            opponent.add_card(card_from_player)
+            
+            print(f"[EFFECT] Swapped {card_from_player} with {card_from_opponent}")
+
+    # Helper baru untuk Skip Effect
+    def execute_skip_effect(self, active_player):
+        """Set status skip ke opponent"""
+        self.__skipped_player = self.get_opponent(active_player)
     
     def __update_main_card_specific(self, target_color):
         """Mencari kartu main baru yang warnanya SESUAI pilihan pemain"""
@@ -219,7 +259,7 @@ class GameManager:
             self.__main_card = valid_card
         else:
             self.__check_game_over()
-    
+            
     def __check_game_over(self):
         """Check if game is over"""
         # Game over if deck is empty or a player has no cards
@@ -461,15 +501,18 @@ class GameManager:
     
     def update_ai(self):
         """Update AI logic"""
+        if self.__game_over:
+            return
         if self.__waiting_for_color:
             return
-        if not self.__game_over:
-            card = self.__ai.choose_card(self.__main_card)
-            if card:
-                try:
-                    self.play_card(self.__ai, card)
-                except (InvalidMoveError, InvalidCardError):
-                    pass
+        if self.__skipped_player == self.__ai:
+            return
+        card = self.__ai.choose_card(self.__main_card)
+        if card:
+            try:
+                self.play_card(self.__ai, card)
+            except (InvalidMoveError, InvalidCardError):
+                pass
     
     def reset_message(self):
         """Clear game message"""
