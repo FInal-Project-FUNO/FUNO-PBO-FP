@@ -253,11 +253,13 @@ class GameScreen(BaseScreen):
                 self.draw_card_image(surface, card, card_x, card_y, i == self.selected_card_index)
 
         # 4. Draw AI Cards (Backside)
-        ai_cards_count = self.game.ai.hand_size()
+        ai_cards = self.game.ai.hand
+        ai_cards_count = len(ai_cards)        
+            
         if ai_cards_count > 0:
             card_spacing = 50
             start_x = (SCREEN_WIDTH) - 650
-            for i in range(ai_cards_count):
+            for i, card in enumerate(ai_cards):
                 card_x = start_x + (i * card_spacing)
                 card_y = 25
                 
@@ -266,6 +268,19 @@ class GameScreen(BaseScreen):
                     surface.blit(back_image, (card_x, card_y))
                 else:
                     pygame.draw.rect(surface, COLOR_GRAY, (card_x, card_y, CARD_WIDTH, CARD_HEIGHT))
+                    
+                if self.game.game_over:
+                    card_x = start_x + (i * card_spacing)
+                    card_y = 25
+                    # Jika Game Over: Tampilkan Wajah Kartu (Seperti Player)
+                    self.draw_card_image(surface, card, card_x, card_y)
+                else:
+                    # Jika Game Jalan: Tampilkan Belakang Kartu
+                    back_image = self.loaded_cards.get("back")
+                    if back_image:
+                        surface.blit(back_image, (card_x, card_y))
+                    else:
+                        pygame.draw.rect(surface, COLOR_GRAY, (card_x, card_y, CARD_WIDTH, CARD_HEIGHT))
 
         # 5. Draw Scores
         player_score = self.font.render(f"{self.game.player.score}", True, COLOR_RED)
@@ -277,29 +292,48 @@ class GameScreen(BaseScreen):
         # 6. Draw Message (jika ada)
         if self.game.message:
             msg_text = self.small_font.render(self.game.message, True, COLOR_WHITE)
-            surface.blit(msg_text, (SCREEN_WIDTH // 2 -200, SCREEN_HEIGHT // 2 +80))
+            msg_x = SCREEN_WIDTH // 2 -200
+            msg_y = SCREEN_HEIGHT // 2 +80
+            
+            source = self.game.message_source
+            
+            if source == 'ai':
+                msg_y = SCREEN_HEIGHT // 2 -100 
+                
+            surface.blit(msg_text, (msg_x, msg_y))
 
-        # 7. Draw Game Over Overlay
+# 7. Draw Game Over Overlay
         if self.game.game_over:
             overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
             overlay.set_alpha(200)
             overlay.fill(COLOR_BLACK)
             surface.blit(overlay, (0, 0))
             
-            if self.game.winner:
-                winner_text = self.font.render(f"{self.game.winner.name} WINS!", True, COLOR_WHITE)
-            else:
-                winner_text = self.font.render("IT'S A TIE!", True, COLOR_WHITE)
+            center_x = SCREEN_WIDTH // 2
             
-            final_score = self.font.render(
-                f"Final Score - You: {self.game.player.score} | AI: {self.game.ai.score}",
-                True, COLOR_WHITE
-            )
+            # 1. Judul Pemenang
+            if self.game.winner:
+                winner_text = self.font.render(f"{self.game.winner.name} WINS!", True, COLOR_YELLOW)
+            else:
+                winner_text = self.font.render("IT'S A TIE!", True, COLOR_YELLOW)
+            
+            # 2. Skor Akhir (FIXED: Render dulu dari string ke surface)
+            score_str = f"Final Score - You: {self.game.player.score} | AI: {self.game.ai.score}"
+            final_score_surf = self.font.render(score_str, True, COLOR_WHITE)
+            
+            # 3. Info Tambahan (Final Condition)
+            # Cek apakah game berakhir karena deck habis?
+            if self.game.deck.is_empty():
+                 info_str = "(Includes Final Hand Pairing Points)"
+                 info_surf = self.small_font.render(info_str, True, COLOR_GRAY)
+                 surface.blit(info_surf, (center_x - info_surf.get_width()//2, 390))
+
+            # 4. Tombol Restart
             restart_text = self.small_font.render("Press ESC to Main Menu", True, COLOR_WHITE)
             
-            center_x = SCREEN_WIDTH // 2
+            # BLIT SEMUANYA KE LAYAR
             surface.blit(winner_text, (center_x - winner_text.get_width()//2, 250))
-            surface.blit(final_score, (center_x - final_score.get_width()//2, 350))
+            surface.blit(final_score_surf, (center_x - final_score_surf.get_width()//2, 350))
             surface.blit(restart_text, (center_x - restart_text.get_width()//2, 450))
             
             

@@ -15,16 +15,19 @@ class GameManager:
         self.__player = Player("Player")
         self.__ai = AIPlayer("AI", "easy")
         self.__main_card = None
+        
         self.__effect_manager = EffectManager()
         self.__game_over = False
         self.__winner = None
+        
         self.__message = ""
+        self.__message_source = None 
+        
         self.__last_played_card = None
         self.__waiting_for_color = False
         
         # Deal initial cards
         self.__deal_initial_cards()
-        
         # Set initial main card
         self.__set_initial_main_card()
     
@@ -63,6 +66,10 @@ class GameManager:
     def message(self):
         """Get game message"""
         return self.__message
+    
+    @property
+    def message_source(self):
+        return self.__message_source
     
     @property
     def last_played_card(self):
@@ -112,12 +119,11 @@ class GameManager:
         points_earned = self.__calculate_dynamic_points(card, self.__main_card)
         player.add_points(points_earned)
         
-        # Simpan Main Card yang sedang aktif sebelum diganti
-        old_main_card = self.__main_card
-        
+        #Pause jika kartu Wild Card
         if card.value in WILD_CARDS and chosen_color is None and player == self.__player:
             self.__waiting_for_color = True
-            self.__message = "Please choose a color..."
+            self.__message = "Choose a color..."
+            self.__message_source = 'player'
             return
         
         self._finalize_turn(player, card, chosen_color, points_earned)
@@ -140,33 +146,37 @@ class GameManager:
         self._finalize_turn(self.__player, card, color, points)
 
     def _finalize_turn(self, player, card, chosen_color, points_earned):
+        '''internal method untuk update state setelah kartu dimainkan'''
         old_main_card = self.__main_card
         try:
-            # 3. Masukkan Main Card lama kembali ke deck (Recycle)
             self.__deck.return_card(old_main_card)
-            
-            # 4. Pemain mengambil 1 kartu baru dari deck (Refill Hand)
             new_card = self.__deck.draw()
             player.add_card(new_card)
             
-            # 5. Update Main Card baru (Cari yang valid)
             self.__update_main_card()
             
+            # set source 
+            if player == self.__player:
+                self.__message_source = 'player'
+            else:
+                self.__message_source = 'ai'
+            
+            #Update Main Card 
             if chosen_color:
                 # Jika ada request warna (dari Wild Card), cari Main Card spesifik
                 self.__update_main_card_specific(chosen_color)
-                self.__message = f"{player.name} played {card} & chose {chosen_color}!"
+                self.__message = f" +{points_earned} ({chosen_color}) !"
             else:
                 # Normal update
                 self.__update_main_card()
-                self.__message = f"{player.name} played {card} (+{points_earned} pts)"
+                self.__message = f"{player.name} +{points_earned})"
             
-            # Set pesan sukses
+            # Set effect
             effect_name = self.__effect_manager.apply_effect(card, self, player)
             if effect_name:
-                self.__message = f"{player.name} played {card} (+{points_earned} pts) - {effect_name}!"
+                self.__message = f"{player.name} +{points_earned} - {effect_name}!"
             else:
-                self.__message = f"{player.name} played {card} (+{points_earned} pts)"
+                self.__message = f"{player.name} +{points_earned}"
 
         except EmptyDeckError:
             # Jika deck habis saat proses draw/update, game selesai
@@ -206,8 +216,28 @@ class GameManager:
     def __check_game_over(self):
         """Check if game is over"""
         # Game over if deck is empty or a player has no cards
-        if self.__deck.is_empty() or self.__player.hand_size() == 0 or self.__ai.hand_size() == 0:
+        
+        deck_empty = self.__deck.is_empty()
+        player_empty = self.__player.hand_size() == 0
+        ai_empty = self.__ai.hand_size() == 0
+        
+        # Kondisi Game Berakhir: Deck Habis ATAU Salah satu pemain habis kartunya
+        if deck_empty or player_empty or ai_empty:
             self.__game_over = True
+            
+            # --- FINAL CONDITION CALCULATION ---
+            # Jika Deck habis, buka kartu sisa (Holding Cards) & hitung Pair
+            if deck_empty:
+                player_final_pts = self.__calculate_final_score(self.__player.hand)
+                ai_final_pts = self.__calculate_final_score(self.__ai.hand)
+                
+                # Tambahkan ke skor total
+                self.__player.add_points(player_final_pts)
+                self.__ai.add_points(ai_final_pts)
+                
+                print(f"[FINAL] Deck Empty! Final Calculation:")
+                print(f"Player Hand Points: +{player_final_pts}")
+                print(f"AI Hand Points: +{ai_final_pts}")
             
             # Determine winner
             if self.__player.score > self.__ai.score:
@@ -264,6 +294,75 @@ class GameManager:
             
         else:
             return played_card.points
+        
+    def __calculate_final_score(self, hand):
+        """
+        Menghitung poin Final Condition berdasarkan Pair.
+        Aturan:
+        1. Prioritas: Pair Simbol (Value sama). Poin = Nilai Kartu (Special=10).
+        2. Sekunder: Pair Warna (Color sama). Poin = Selisih Nilai kedua kartu.
+        3. Sisanya 0 poin.
+        """
+        # Salin list agar tidak merusak data asli saat proses pop()
+        cards = hand[:] 
+        final_points = 0
+        
+        # --- STEP 1: Cek Pair Simbol (Prioritas Utama) ---
+        i = 0
+        while i < len(cards):
+            card_a = cards[i]
+            paired = False
+            
+            # Cari pasangan di kartu sisa
+            for j in range(i + 1, len(cards)):
+                card_b = cards[j]
+                
+                # Cek Value Sama (Misal: 4 Merah & 4 Biru)
+                if card_a.value == card_b.value:
+                    # HIT: Pair Simbol
+                    # Poin = Nilai Kartu itu sendiri (Sesuai aturan f)
+                    # (Card points sudah diset 10 untuk special di constants.py)
+                    points = card_a.points 
+                    final_points += points
+                    
+                    # Hapus kartu yang sudah berpasangan
+                    # Hapus index j (belakang) dulu biar index i gak geser
+                    cards.pop(j)
+                    cards.pop(i)
+                    
+                    paired = True
+                    break # Keluar loop inner, lanjut loop outer
+            
+            if not paired:
+                i += 1 # Lanjut cek kartu berikutnya
+        
+        # --- STEP 2: Cek Pair Warna (Kartu Sisa) ---
+        i = 0
+        while i < len(cards):
+            card_a = cards[i]
+            paired = False
+            
+            for j in range(i + 1, len(cards)):
+                card_b = cards[j]
+                
+                # Cek Warna Sama (Misal: 8 Hijau & 3 Hijau)
+                # Pastikan bukan Wild (Wild biasanya tidak punya warna kecuali dimainkan)
+                if card_a.color == card_b.color and card_a.color not in ['wild', None]:
+                    # HIT: Pair Warna
+                    # Poin = Selisih Nilai (Absolute Difference)
+                    diff = abs(card_a.points - card_b.points)
+                    final_points += diff
+                    
+                    cards.pop(j)
+                    cards.pop(i)
+                    
+                    paired = True
+                    break
+            
+            if not paired:
+                i += 1
+                
+        return final_points
     
     def get_opponent(self, player):
         """Get opponent of a player"""
