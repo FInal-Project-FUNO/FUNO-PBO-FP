@@ -9,11 +9,11 @@ from src.core.effect_manager import EffectManager
 class GameManager:
     """Main game manager (Composition)"""
     
-    def __init__(self):
+    def __init__(self, difficulty='easy'):
         """Initialize game manager"""
         self.__deck = Deck()
         self.__player = Player("Player")
-        self.__ai = AIPlayer("AI", "easy")
+        self.__ai = AIPlayer("AI", difficulty)
         self.__main_card = None
         
         self.__effect_manager = EffectManager()

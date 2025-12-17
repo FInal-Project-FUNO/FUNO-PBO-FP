@@ -9,6 +9,9 @@ class GameScreen(BaseScreen):
         super().__init__(manager)
         # 1. Inisialisasi Game Manager
         self.game = GameManager() 
+        difficulty = getattr(manager, 'selected_difficulty', 'easy')
+        print(f"[GAME] Starting with difficulty: {difficulty}")
+        self.game = GameManager(difficulty=difficulty)
         
         # 2. Inisialisasi Font
         self.font = pygame.font.Font(FONT_PATH, 36)
