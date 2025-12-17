@@ -26,6 +26,9 @@ class GameManager:
         self.__last_played_card = None
         self.__waiting_for_color = False
         
+        self.__is_final_condition = False
+        self.__final_score_queue = []
+        
         # Deal initial cards
         self.__deal_initial_cards()
         # Set initial main card
@@ -79,6 +82,10 @@ class GameManager:
     @property
     def is_waiting_for_color(self):
         return self.__waiting_for_color
+    
+    @property
+    def is_final_condition(self):
+        return self.__is_final_condition
     
     def __deal_initial_cards(self):
             """Deal initial cards to players"""
@@ -221,9 +228,15 @@ class GameManager:
         player_empty = self.__player.hand_size() == 0
         ai_empty = self.__ai.hand_size() == 0
         
-        # Kondisi Game Berakhir: Deck Habis ATAU Salah satu pemain habis kartunya
-        if deck_empty or player_empty or ai_empty:
-            self.__game_over = True
+        
+        if deck_empty:
+            if not self.__is_final_condition and not self.__game_over:
+                self.__is_final_condition = True
+                self.__prepare_final_scores()
+            
+            elif player_empty or ai_empty:
+             # JIKA KARTU TANGAN HABIS: Game Over Normal
+             self.__finalize_game_over()
             
             # --- FINAL CONDITION CALCULATION ---
             # Jika Deck habis, buka kartu sisa (Holding Cards) & hitung Pair
@@ -246,6 +259,84 @@ class GameManager:
                 self.__winner = self.__ai
             else:
                 self.__winner = None  # Tie
+                
+    def __prepare_final_scores(self):
+        """Menghitung pair dan memasukkannya ke antrian animasi"""
+        
+        # Helper untuk mencari pair di satu tangan
+        def get_pair_events(hand, source_name):
+            events = []
+            cards = hand[:] # Copy agar tidak merusak list asli
+            
+            # 1. Pair Simbol
+            i = 0
+            while i < len(cards):
+                paired = False
+                for j in range(i + 1, len(cards)):
+                    if cards[i].value == cards[j].value:
+                        points = cards[i].points 
+                        events.append({'source': source_name, 'points': points, 'desc': 'Symbol Pair'})
+                        cards.pop(j); cards.pop(i)
+                        paired = True; break
+                if not paired: i += 1
+
+            # 2. Pair Warna
+            i = 0
+            while i < len(cards):
+                paired = False
+                for j in range(i + 1, len(cards)):
+                    if cards[i].color == cards[j].color and cards[i].color not in ['wild', None]:
+                        diff = abs(cards[i].points - cards[j].points)
+                        if diff > 0: # Hanya jika ada poin
+                            events.append({'source': source_name, 'points': diff, 'desc': 'Color Pair'})
+                        cards.pop(j); cards.pop(i)
+                        paired = True; break
+                if not paired: i += 1
+            
+            return events
+
+        # Masukkan hasil Player dulu, baru AI
+        self.__final_score_queue.extend(get_pair_events(self.__player.hand, 'player'))
+        self.__final_score_queue.extend(get_pair_events(self.__ai.hand, 'ai'))
+
+    def process_next_final_score(self):
+        """
+        Dipanggil oleh GameScreen setiap X detik.
+        Mengambil satu event dari antrian dan menampilkannya.
+        """
+        # Jika antrian habis, selesai!
+        if not self.__final_score_queue:
+            self.__finalize_game_over()
+            return False 
+
+        # Ambil satu event
+        event = self.__final_score_queue.pop(0)
+        source = event['source']
+        points = event['points']
+        
+        # Tambah Poin & Set Pesan
+        if source == 'player':
+            self.__player.add_points(points)
+            self.__message_source = 'player'
+        else:
+            self.__ai.add_points(points)
+            self.__message_source = 'ai'
+            
+        self.__message = f"+{points}" # Tampilkan "+4" dsb
+        return True
+
+    def __finalize_game_over(self):
+        """Finalisasi Game Over dan Tentukan Pemenang"""
+        self.__game_over = True
+        self.__is_final_condition = False
+        self.__message = "" # Bersihkan pesan poin terakhir
+        
+        if self.__player.score > self.__ai.score:
+            self.__winner = self.__player
+        elif self.__ai.score > self.__player.score:
+            self.__winner = self.__ai
+        else:
+            self.__winner = None
                 
     def __is_playable_by_anyone(self, target_card):
         # (Sama seperti sebelumnya: Cek apakah Player ATAU AI punya kartu yang cocok)

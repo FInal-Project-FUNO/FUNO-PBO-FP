@@ -47,6 +47,8 @@ class GameScreen(BaseScreen):
         self.last_seen_played_card = None 
         # Kita simpan main card frame sebelumnya untuk snapshot
         self.prev_main_card_snapshot = self.game.main_card
+        
+        self.final_score_timer = 0
 
     def _load_assets(self):
         """Memuat semua gambar kartu"""
@@ -197,6 +199,20 @@ class GameScreen(BaseScreen):
         else:
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
             
+        if self.game.is_final_condition and not self.game.game_over:
+            if current_time - self.final_score_timer > 1000:
+                
+                # Panggil proses selanjutnya
+                has_next = self.game.process_next_final_score()
+                
+                # Reset timer
+                self.final_score_timer = current_time
+                
+        if not self.game.game_over and not self.input_locked:
+            # Pastikan AI tidak jalan saat Final Condition
+            if not self.game.is_final_condition: 
+                self.game.update_ai()
+                
     def _start_transition_animation(self, old_main, played_card):
         """Memulai urutan animasi visual"""
         self.animation_state = "SHOW_MATCH"
@@ -262,21 +278,15 @@ class GameScreen(BaseScreen):
             for i, card in enumerate(ai_cards):
                 card_x = start_x + (i * card_spacing)
                 card_y = 25
-                
                 back_image = self.loaded_cards.get("back")
-                if back_image:
-                    surface.blit(back_image, (card_x, card_y))
-                else:
-                    pygame.draw.rect(surface, COLOR_GRAY, (card_x, card_y, CARD_WIDTH, CARD_HEIGHT))
-                    
-                if self.game.game_over:
+                
+                if self.game.is_final_condition or self.game.game_over:
                     card_x = start_x + (i * card_spacing)
                     card_y = 25
                     # Jika Game Over: Tampilkan Wajah Kartu (Seperti Player)
                     self.draw_card_image(surface, card, card_x, card_y)
                 else:
                     # Jika Game Jalan: Tampilkan Belakang Kartu
-                    back_image = self.loaded_cards.get("back")
                     if back_image:
                         surface.blit(back_image, (card_x, card_y))
                     else:
