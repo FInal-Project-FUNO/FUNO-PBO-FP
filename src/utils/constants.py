@@ -68,7 +68,7 @@ CARD_IMAGES = {
 }
 
 #Main Menu
-MENU_PATH = os.path.join(ASSET_DIR, "ui", "mockup540.png")
+MENU_PATH = os.path.join(ASSET_DIR, "ui", "main_menu.png")
 
 
 #Decks image

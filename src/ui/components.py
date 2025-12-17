@@ -1,34 +1,26 @@
 import pygame
-from src.utils.constants import *
 
 class Button:
-    def __init__(self, x, y, width, height, text, font, action=None):
+    def __init__(self, x, y, width, height, action=None):
+        # Kita hanya butuh Rect untuk posisi dan ukuran (Hitbox)
         self.rect = pygame.Rect(x, y, width, height)
-        self.text = text
-        self.font = font
-        self.action = action # Fungsi yang akan dijalankan saat diklik
-        
-        # Warna (Bisa dipindah ke constants nanti)
-        self.color_normal = COLOR_GRAY
-        self.color_hover = COLOR_YELLOW
-        self.text_color = COLOR_WHITE
+        self.action = action
         self.is_hovered = False
 
     def handle_event(self, event):
+        # Deteksi Hover (Opsional, berguna jika ingin mengubah kursor mouse)
         if event.type == pygame.MOUSEMOTION:
             self.is_hovered = self.rect.collidepoint(event.pos)
             
+        # Deteksi Klik
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.is_hovered and self.action:
-                self.action() # Panggil fungsi callback
+            if event.button == 1: # Klik Kiri
+                if self.rect.collidepoint(event.pos) and self.action:
+                    self.action()
 
-    def draw(self, surface):
-        # 1. Gambar Kotak (Background)
-        color = self.color_hover if self.is_hovered else self.color_normal
-        pygame.draw.rect(surface, color, self.rect, border_radius=10)
-        pygame.draw.rect(surface, COLOR_BLACK, self.rect, 3, border_radius=10) # Border
-
-        # 2. Gambar Teks (Centered)
-        text_surf = self.font.render(self.text, True, self.text_color)
-        text_rect = text_surf.get_rect(center=self.rect.center)
-        surface.blit(text_surf, text_rect)
+    def draw(self, surface, debug=False):
+        # Secara default, tidak menggambar apa-apa (invisible)
+        # Parameter debug=True bisa dipakai untuk melihat posisi hitbox saat development
+        if debug:
+            color = (255, 0, 0) if self.is_hovered else (0, 255, 0)
+            pygame.draw.rect(surface, color, self.rect, 2) # Gambar garis tepi saja
