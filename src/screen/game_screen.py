@@ -216,8 +216,8 @@ class GameScreen(BaseScreen):
         load_deck(surface, deck_x, deck_y, cards_left)
         
         # Text jumlah deck
-        deck_text = self.small_font.render(f"{cards_left}", True, COLOR_WHITE)
-        surface.blit(deck_text, (deck_x + 50, deck_y + CARD_HEIGHT + 10))
+        deck_text = self.small_font.render(f"{cards_left}", True, COLOR_BLACK)
+        surface.blit(deck_text, (deck_x + 40, deck_y + CARD_HEIGHT + 12))
 
         # 2. Draw Main Card
         if self.game.main_card:
@@ -268,16 +268,16 @@ class GameScreen(BaseScreen):
                     pygame.draw.rect(surface, COLOR_GRAY, (card_x, card_y, CARD_WIDTH, CARD_HEIGHT))
 
         # 5. Draw Scores
-        player_score = self.font.render(f"Your Score: {self.game.player.score}", True, COLOR_WHITE)
-        ai_score = self.font.render(f"AI Score: {self.game.ai.score}", True, COLOR_WHITE)
+        player_score = self.font.render(f"{self.game.player.score}", True, COLOR_RED)
+        ai_score = self.font.render(f"{self.game.ai.score}", True, COLOR_RED)
         
-        surface.blit(player_score, (SCREEN_WIDTH - 250, SCREEN_HEIGHT - 100))
-        surface.blit(ai_score, (SCREEN_WIDTH - 250, 50))
+        surface.blit(player_score, (SCREEN_WIDTH * 0.8, SCREEN_HEIGHT // 2 + 30))
+        surface.blit(ai_score, (SCREEN_WIDTH * 0.8, SCREEN_HEIGHT // 2 - 55))
 
         # 6. Draw Message (jika ada)
         if self.game.message:
-            msg_text = self.small_font.render(self.game.message, True, COLOR_YELLOW)
-            surface.blit(msg_text, (50, SCREEN_HEIGHT // 2 - 100))
+            msg_text = self.small_font.render(self.game.message, True, COLOR_WHITE)
+            surface.blit(msg_text, (SCREEN_WIDTH // 2 -200, SCREEN_HEIGHT // 2 +80))
 
         # 7. Draw Game Over Overlay
         if self.game.game_over:
@@ -287,9 +287,9 @@ class GameScreen(BaseScreen):
             surface.blit(overlay, (0, 0))
             
             if self.game.winner:
-                winner_text = self.font.render(f"{self.game.winner.name} WINS!", True, COLOR_YELLOW)
+                winner_text = self.font.render(f"{self.game.winner.name} WINS!", True, COLOR_WHITE)
             else:
-                winner_text = self.font.render("IT'S A TIE!", True, COLOR_YELLOW)
+                winner_text = self.font.render("IT'S A TIE!", True, COLOR_WHITE)
             
             final_score = self.font.render(
                 f"Final Score - You: {self.game.player.score} | AI: {self.game.ai.score}",
@@ -343,9 +343,9 @@ class GameScreen(BaseScreen):
                     pygame.draw.line(surface, border_color, rect.topleft, rect.bottomright, 3)
                     pygame.draw.line(surface, border_color, rect.bottomleft, rect.topright, 3)
 
-        # ... (Indikator debug dll) ...
-        state_text = self.small_font.render(f"DEBUG STATE: {self.animation_state}", True, COLOR_YELLOW)
-        surface.blit(state_text, (15, 15))
+        # # ... (Indikator debug dll) ...
+        # state_text = self.small_font.render(f"DEBUG STATE: {self.animation_state}", True, COLOR_YELLOW)
+        # surface.blit(state_text, (15, 15))
         
     def _get_player_hand_colors(self):
         """Mendapatkan set warna unik yang dimiliki player saat ini"""
