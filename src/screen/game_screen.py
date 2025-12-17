@@ -348,10 +348,14 @@ class GameScreen(BaseScreen):
         surface.blit(state_text, (15, 15))
         
     def _get_player_hand_colors(self):
-        """Mendapatkan set warna unik yang dimiliki player saat ini"""
         colors = set()
         for card in self.game.player.hand:
-            # Pastikan hanya mengambil warna dasar (bukan wild)
             if card.color in ['red', 'green', 'blue', 'yell']:
                 colors.add(card.color)
+        
+        # PERBAIKAN: Jika tangan kosong (setelah main Wild) atau cuma isi Wild
+        # Kembalikan semua warna agar tidak soft-lock
+        if not colors:
+            return {'red', 'green', 'blue', 'yell'}
+            
         return colors

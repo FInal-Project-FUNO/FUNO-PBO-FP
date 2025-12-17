@@ -98,6 +98,9 @@ class GameManager:
         Player plays a card
         args : choose color for wild card
         """
+        if player.is_frozen():
+            return
+        
         # 1. Validasi
         if not card.matches(self.__main_card):
             raise InvalidMoveError(f"{card} doesn't match {self.__main_card}")
@@ -284,3 +287,98 @@ class GameManager:
     def reset_message(self):
         """Clear game message"""
         self.__message = ""
+        
+    def __check_game_over(self):
+        """Check if game is over and Calculate Final Conditions"""
+        # Game over conditions: Deck habis ATAU Salah satu pemain kartunya habis
+        if self.__deck.is_empty() or self.__player.hand_size() == 0 or self.__ai.hand_size() == 0:
+            self.__game_over = True
+            
+            # --- UPDATE FINAL CONDITION LOGIC ---
+            # Jika game berakhir karena Deck Habis, kita hitung Final Pairing
+            if self.__deck.is_empty():
+                player_bonus = self.__calculate_final_hand_points(self.__player.hand)
+                ai_bonus = self.__calculate_final_hand_points(self.__ai.hand)
+                
+                self.__player.add_points(player_bonus)
+                self.__ai.add_points(ai_bonus)
+                
+                # Update pesan agar user tahu ada tambahan poin
+                self.__message = f"Final Bonus -> You: +{player_bonus} | AI: +{ai_bonus}"
+
+            # Determine winner
+            if self.__player.score > self.__ai.score:
+                self.__winner = self.__player
+            elif self.__ai.score > self.__player.score:
+                self.__winner = self.__ai
+            else:
+                self.__winner = None  # Tie
+
+    def __calculate_final_hand_points(self, hand):
+        """
+        Menghitung poin akhir berdasarkan aturan Pairing Funo:
+        1. Pair Simbol (Prioritas Utama) -> Nilai = Simbol
+        2. Pair Warna (Sisa Kartu) -> Nilai = Selisih Simbol
+        3. Sisa -> 0 Poin
+        """
+        # Kita copy hand agar tidak merusak list asli saat remove
+        # Kita butuh format dictionary atau object yang mudah dimanipulasi
+        remaining_cards = hand.copy()
+        total_points = 0
+        
+        # --- TAHAP 1: PAIR SIMBOL (VALUE) ---
+        # Kita cari pasangan angka/simbol yang sama
+        i = 0
+        while i < len(remaining_cards):
+            card_a = remaining_cards[i]
+            match_found = False
+            
+            # Cari pasangannya di sisa list (j + 1)
+            for j in range(i + 1, len(remaining_cards)):
+                card_b = remaining_cards[j]
+                
+                # Cek kesamaan Value (Angka/Simbol)
+                if card_a.value == card_b.value:
+                    # MATCH FOUND!
+                    points = card_a.points # Special = 10, Angka = Angka
+                    total_points += points
+                    
+                    # Hapus kedua kartu dari list (Hapus index besar dulu biar index kecil gak geser)
+                    remaining_cards.pop(j)
+                    remaining_cards.pop(i)
+                    
+                    match_found = True
+                    break # Lanjut ke kartu berikutnya (karena i sudah dihapus/diganti)
+            
+            if not match_found:
+                i += 1 # Jika tidak ada pasangan, lanjut cek kartu berikutnya
+            # Jika match_found, 'i' tidak perlu ditambah karena elemen baru sudah geser ke posisi 'i'
+
+        # --- TAHAP 2: PAIR WARNA (COLOR) ---
+        # Dilakukan pada sisa kartu yang tidak kena pair simbol
+        i = 0
+        while i < len(remaining_cards):
+            card_a = remaining_cards[i]
+            match_found = False
+            
+            for j in range(i + 1, len(remaining_cards)):
+                card_b = remaining_cards[j]
+                
+                # Cek kesamaan Warna & Validasi bukan Wild (Wild tidak punya warna tetap di tangan)
+                if card_a.color == card_b.color and card_a.color in CARD_COLORS:
+                    # MATCH FOUND!
+                    # Nilai = Selisih simbol (abs)
+                    val_a = card_a.points
+                    val_b = card_b.points
+                    points = abs(val_a - val_b)
+                    total_points += points
+                    
+                    remaining_cards.pop(j)
+                    remaining_cards.pop(i)
+                    match_found = True
+                    break
+            
+            if not match_found:
+                i += 1
+
+        return total_points
