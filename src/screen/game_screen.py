@@ -9,7 +9,7 @@ class GameScreen(BaseScreen):
         super().__init__(manager)
         # 1. Inisialisasi Game Manager
         from ..utils import constants
-        difficulty = constants.CURRENT_DIFFICULTY
+        difficulty = self.manager.selected_difficulty
         print(f"[GAME] Starting with difficulty: {difficulty}")
         self.game = GameManager(difficulty=difficulty)
         

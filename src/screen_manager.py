@@ -5,6 +5,7 @@ from src.core.game_manager import GameManager
 class ScreenManager:
     def __init__(self):
         self.current_screen = None
+        self.selected_difficulty = "easy"  # Default difficulty
     
     def set_screen(self, screen_type):
         if screen_type == 'MENU':
