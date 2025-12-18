@@ -35,6 +35,8 @@ class GameManager:
         # FIX: Inisialisasi variabel ini SEBELUM deal cards agar tidak error
         self.__skipped_player = None
         
+        self.__skipped_player = None
+
         # Deal initial cards
         self.__deal_initial_cards()
         # Set initial main card
