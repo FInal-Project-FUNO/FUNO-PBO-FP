@@ -42,29 +42,39 @@ Proyek ini dibuat untuk memenuhi tugas akhir mata kuliah **Pemrograman Berorient
 
 Struktur direktori dirancang secara modular memisahkan *Core Logic*, *UI/Screen*, dan *Assets*.
 
-FUNO-PBO-FP/ 
-├── assets/ # Gambar, Font, dan Audio 
-├── src/ # Source Code Utama 
-│ ├── core/ # Backend Logic (Game Rules)
-│ │ ├── card.py # Representasi Kartu 
-│ │ ├── deck.py # Manajemen Tumpukan Kartu 
-│ │ ├── effect_manager.py # Logika Efek Kartu (Polymorphism) 
-│ │ ├── game_manager.py # Controller Utama (Composition) 
-│ │ ├── npc.py # AI Logic (Inheritance) 
-│ │ └── player.py # Base Player Class 
-│ ├── screen/ # Frontend Logic (Visual)
-│ │ ├── base.py # Abstract Base Screen 
-│ │ ├── game_screen.py # Layar Permainan Utama 
-│ │ └── main_menu.py # Menu & Difficulty Selection
-│ ├── ui/ # Reusable UI Components 
-│ │ ├── components.py # Buttons & Widgets 
-│ │ └── deck_animation.py # Animasi Tumpukan Deck 
-│ ├── utils/ # Utilities 
-│ │ └── constants.py # Global Config & Settings 
-| ├── main.py # Entry Point Aplikasi 
-│ └── screen_manager.py # State Machine Manager 
-└── README.md # Dokumentasi
-
+```text
+FUNO-PBO-FP/
+├── assets/                    # Gambar, Font, dan Audio
+├── src/                       # Source Code Utama
+│   ├── core/                  # Backend Logic (Game Rules)
+│   │   ├── __init__.py
+│   │   ├── card.py            # Representasi Kartu
+│   │   ├── deck.py            # Manajemen Tumpukan Kartu
+│   │   ├── effect_manager.py  # Logika Efek Kartu (Polymorphism)
+│   │   ├── game_manager.py    # Controller Utama (Composition)
+│   │   ├── npc.py             # AI Logic (Inheritance)
+│   │   └── player.py          # Base Player Class
+│   │
+│   ├── screen/                # Frontend Logic (Visual)
+│   │   ├── __init__.py
+│   │   ├── base.py            # Abstract Base Screen
+│   │   ├── game_screen.py     # Layar Permainan Utama
+│   │   └── main_menu.py       # Menu & Difficulty Selection
+│   │
+│   ├── ui/                    # Reusable UI Components
+│   │   ├── __init__.py
+│   │   ├── components.py      # Buttons & Widgets
+│   │   └── deck_animation.py  # Animasi Tumpukan Deck
+│   │
+│   ├── utils/                 # Utilities
+│   │   ├── __init__.py
+│   │   └── constants.py       # Global Config & Settings
+│   │
+│   ├── __init__.py
+│   ├── main.py                # Entry Point Aplikasi
+│   └── screen_manager.py      # State Machine Manager
+│
+└── README.md                  # Dokumentasi Proyek
 ---
 
 ## 🎮 Fitur & Mekanisme Game
