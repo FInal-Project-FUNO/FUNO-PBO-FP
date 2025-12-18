@@ -75,6 +75,7 @@ FUNO-PBO-FP/
 │   └── screen_manager.py      # State Machine Manager
 │
 └── README.md                  # Dokumentasi Proyek
+```
 ---
 
 ## 🎮 Fitur & Mekanisme Game
