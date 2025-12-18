@@ -96,6 +96,41 @@ class GameScreen(BaseScreen):
             
             surface.blit(image, rect)
 
+    def _draw_shimmer(self, surface, x, y, w, h):
+        """
+        Membuat efek kilau cahaya (shimmer) bergerak pada kartu.
+        """
+        # 1. Setup Dimensi
+        width = w
+        height = h
+        
+        # 2. Hitung posisi animasi berdasarkan waktu
+        # Animasi berulang setiap 1000ms (1 detik)
+        period = 1000 
+        current_time = pygame.time.get_ticks()
+        progress = (current_time % period) / period # Nilai 0.0 s/d 1.0
+        
+        # 3. Buat Surface Transparan khusus untuk Shimmer
+        shimmer_surf = pygame.Surface((width, height), pygame.SRCALPHA)
+        
+        # 4. Gambar Pita Cahaya
+        # Pita bergerak dari kiri (-width) ke kanan (+width)
+        band_width = 40 
+        start_x = -band_width + (width + band_width * 2) * progress
+        shimmer_color = (255, 255, 255, 120) 
+        
+        points = [
+            (start_x, 0),                 
+            (start_x + band_width, 0),    
+            (start_x + band_width - 20, height), 
+            (start_x - 20, height)        
+        ]
+        
+        pygame.draw.polygon(shimmer_surf, shimmer_color, points)
+        
+        # 5. Blit (Tempel) ke kartu
+        surface.blit(shimmer_surf, (x, y), special_flags=pygame.BLEND_RGBA_ADD)
+        
     def handle_events(self, event):
         if self.input_locked:
             return
@@ -246,11 +281,34 @@ class GameScreen(BaseScreen):
         
         if num_cards > 0:
             card_spacing = 100
-            start_x = (SCREEN_WIDTH -750)
+            start_x = (SCREEN_WIDTH - 750)
+            
             for i, card in enumerate(player_cards):
                 card_x = start_x + (i * card_spacing)
                 card_y = SCREEN_HEIGHT - CARD_HEIGHT - 25
-                self.draw_card_image(surface, card, card_x, card_y, i == self.selected_card_index)
+                
+                # Logic Highlight
+                is_selected = (i == self.selected_card_index)
+                
+                # Logic Winning Pair
+                is_winning_pair = False
+                if self.game.game_over and (i in self.game.final_winning_indices):
+                    is_winning_pair = True
+                
+                # 1. Gambar Kartu Dasarnya
+                self.draw_card_image(surface, card, card_x, card_y, selected=is_selected)
+                
+                if is_winning_pair:
+                    # --- LOGIC AGAR TIDAK KEGEDEAN ---
+                    padding = 5 # Jarak dari pinggir kartu (pixel)
+                    
+                    shimmer_w = CARD_WIDTH - (padding * 2)
+                    shimmer_h = CARD_HEIGHT - (padding * 2)
+                    shimmer_x = card_x + padding
+                    shimmer_y = card_y + padding
+                    
+                    # Panggil fungsi dengan ukuran yang sudah dikurangi padding
+                    self._draw_shimmer(surface, shimmer_x, shimmer_y, shimmer_w, shimmer_h)
 
         # 4. Draw AI Cards (Backside)
         ai_cards_count = self.game.ai.hand_size()

@@ -21,6 +21,7 @@ class GameManager:
         self.__message = ""
         self.__last_played_card = None
         self.__waiting_for_color = False
+        self.final_winning_indices = []
         
         # Deal initial cards
         self.__deal_initial_cards()
@@ -208,17 +209,30 @@ class GameManager:
     
     def __check_game_over(self):
         """Check if game is over"""
-        # Game over if deck is empty or a player has no cards
         if self.__deck.is_empty() or self.__player.hand_size() == 0 or self.__ai.hand_size() == 0:
             self.__game_over = True
             
+            # Jika Deck habis, hitung Pair
+            if self.__deck.is_empty():
+                # Hitung poin DAN dapatkan index kartu yang pair
+                p_points, p_indices = self.__calculate_final_hand_points(self.__player.hand)
+                a_points, _         = self.__calculate_final_hand_points(self.__ai.hand)
+                
+                self.__player.add_points(p_points)
+                self.__ai.add_points(a_points)
+                
+                # SIMPAN INDEX UNTUK VISUALISASI DI GAME SCREEN
+                self.final_winning_indices = p_indices
+                
+                self.__message = f"Final Pair Bonus! You: +{p_points} | AI: +{a_points}"
+
             # Determine winner
             if self.__player.score > self.__ai.score:
                 self.__winner = self.__player
             elif self.__ai.score > self.__player.score:
                 self.__winner = self.__ai
             else:
-                self.__winner = None  # Tie
+                self.__winner = None
                 
     def __is_playable_by_anyone(self, target_card):
         # (Sama seperti sebelumnya: Cek apakah Player ATAU AI punya kartu yang cocok)
@@ -297,16 +311,22 @@ class GameManager:
             # --- UPDATE FINAL CONDITION LOGIC ---
             # Jika game berakhir karena Deck Habis, kita hitung Final Pairing
             if self.__deck.is_empty():
-                player_bonus = self.__calculate_final_hand_points(self.__player.hand)
-                ai_bonus = self.__calculate_final_hand_points(self.__ai.hand)
+                # PERBAIKAN DISINI: Unpack 2 nilai (Poin dan Index)
+                p_points, p_indices = self.__calculate_final_hand_points(self.__player.hand)
+                a_points, _         = self.__calculate_final_hand_points(self.__ai.hand) 
+                # Note: Kita ignore index AI (_) karena AI tidak perlu di-highlight visualnya
                 
-                self.__player.add_points(player_bonus)
-                self.__ai.add_points(ai_bonus)
+                # Tambahkan Poin
+                self.__player.add_points(p_points)
+                self.__ai.add_points(a_points)
+                
+                # PENTING: Simpan index ke variabel global agar bisa dibaca GameScreen
+                self.final_winning_indices = p_indices
                 
                 # Update pesan agar user tahu ada tambahan poin
-                self.__message = f"Final Bonus -> You: +{player_bonus} | AI: +{ai_bonus}"
+                self.__message = f"Final Bonus -> You: +{p_points} | AI: +{a_points}"
 
-            # Determine winner
+            # Determine winner (Posisi indentasi sudah benar: Sejajar dengan if deck empty)
             if self.__player.score > self.__ai.score:
                 self.__winner = self.__player
             elif self.__ai.score > self.__player.score:
@@ -316,69 +336,51 @@ class GameManager:
 
     def __calculate_final_hand_points(self, hand):
         """
-        Menghitung poin akhir berdasarkan aturan Pairing Funo:
-        1. Pair Simbol (Prioritas Utama) -> Nilai = Simbol
-        2. Pair Warna (Sisa Kartu) -> Nilai = Selisih Simbol
-        3. Sisa -> 0 Poin
+        Menghitung poin pair TANPA menghapus kartu dari list asli.
+        Returns: (total_points, list_of_paired_indices)
         """
-        # Kita copy hand agar tidak merusak list asli saat remove
-        # Kita butuh format dictionary atau object yang mudah dimanipulasi
-        remaining_cards = hand.copy()
         total_points = 0
+        paired_indices = []
+        
+        n = len(hand)
+        used = [False] * n # Array untuk menandai kartu yang sudah dipasangkan
         
         # --- TAHAP 1: PAIR SIMBOL (VALUE) ---
-        # Kita cari pasangan angka/simbol yang sama
-        i = 0
-        while i < len(remaining_cards):
-            card_a = remaining_cards[i]
-            match_found = False
+        for i in range(n):
+            if used[i]: continue # Skip jika sudah terpakai
             
-            # Cari pasangannya di sisa list (j + 1)
-            for j in range(i + 1, len(remaining_cards)):
-                card_b = remaining_cards[j]
+            for j in range(i + 1, n):
+                if used[j]: continue
                 
-                # Cek kesamaan Value (Angka/Simbol)
-                if card_a.value == card_b.value:
-                    # MATCH FOUND!
-                    points = card_a.points # Special = 10, Angka = Angka
+                # Cek Value Sama
+                if hand[i].value == hand[j].value:
+                    # Match Found!
+                    points = hand[i].points
                     total_points += points
                     
-                    # Hapus kedua kartu dari list (Hapus index besar dulu biar index kecil gak geser)
-                    remaining_cards.pop(j)
-                    remaining_cards.pop(i)
-                    
-                    match_found = True
-                    break # Lanjut ke kartu berikutnya (karena i sudah dihapus/diganti)
-            
-            if not match_found:
-                i += 1 # Jika tidak ada pasangan, lanjut cek kartu berikutnya
-            # Jika match_found, 'i' tidak perlu ditambah karena elemen baru sudah geser ke posisi 'i'
+                    # Tandai Used & Simpan Index
+                    used[i] = True
+                    used[j] = True
+                    paired_indices.extend([i, j])
+                    break # Pindah ke kartu 'i' berikutnya
 
         # --- TAHAP 2: PAIR WARNA (COLOR) ---
-        # Dilakukan pada sisa kartu yang tidak kena pair simbol
-        i = 0
-        while i < len(remaining_cards):
-            card_a = remaining_cards[i]
-            match_found = False
+        for i in range(n):
+            if used[i]: continue 
             
-            for j in range(i + 1, len(remaining_cards)):
-                card_b = remaining_cards[j]
+            for j in range(i + 1, n):
+                if used[j]: continue
                 
-                # Cek kesamaan Warna & Validasi bukan Wild (Wild tidak punya warna tetap di tangan)
-                if card_a.color == card_b.color and card_a.color in CARD_COLORS:
-                    # MATCH FOUND!
-                    # Nilai = Selisih simbol (abs)
-                    val_a = card_a.points
-                    val_b = card_b.points
-                    points = abs(val_a - val_b)
-                    total_points += points
+                # Cek Warna Sama (Dan bukan Wild)
+                if hand[i].color == hand[j].color and hand[i].color in CARD_COLORS:
+                    # Match Found!
+                    val_a = hand[i].points
+                    val_b = hand[j].points
+                    total_points += abs(val_a - val_b)
                     
-                    remaining_cards.pop(j)
-                    remaining_cards.pop(i)
-                    match_found = True
+                    used[i] = True
+                    used[j] = True
+                    paired_indices.extend([i, j])
                     break
-            
-            if not match_found:
-                i += 1
-
-        return total_points
+                    
+        return total_points, paired_indices
