@@ -70,7 +70,6 @@ CARD_IMAGES = {
 #Main Menu
 MENU_PATH = os.path.join(ASSET_DIR, "ui", "main_menu.png")
 
-
 #Decks image
 DECK_IMAGES = os.path.join(ASSET_DIR, "deck", "decks_funo.png")
 DECK_FRAMES_COUNT = 5
@@ -79,7 +78,6 @@ MAX_DECK_SIZE = 60
 #Game_screen
 SLOT_PATH = os.path.join(ASSET_DIR, "ui", "slot.png")
 BACKGROUND_PATH = os.path.join(ASSET_DIR, "ui", "game_screen.png")
-
 
 # Screen settings
 SCREEN_WIDTH = 960
@@ -97,6 +95,15 @@ COLOR_GRAY = (128, 128, 128)
 COLOR_DARK_GREEN = (0, 100, 0)
 COLOR_BG = (0, 57, 109)
 
+
+#font
+FONT_PATH = os.path.join(ASSET_DIR, "fonts", "Pix32.ttf")
+
+#Sound paths
+SOUND_DIR = os.path.join(ASSET_DIR, "sound")
+SOUND_PLAY_CARD = os.path.join(SOUND_DIR, "118513__thefsoundman__punch_02.wav")
+SOUND_BUTTON_CLICK = os.path.join(SOUND_DIR, "161544__dasdeer__button.wav")
+SOUND_DRAW_CARD = os.path.join(SOUND_DIR, "817546__silverdubloons__pickupcard00.wav")
 
 # Card settings
 CARD_WIDTH = 128
@@ -119,9 +126,9 @@ CARD_POINTS = {
     'p4': 10
 }
 
-#font
-FONT_PATH = os.path.join(ASSET_DIR, "fonts", "Pix32.ttf")
-
 # Game settings
 INITIAL_CARDS = 5
-AI_DELAY = 7  # seconds
+AI_DELAY = 3  # seconds
+
+# Difficulty setting
+CURRENT_DIFFICULTY = "easy"  # Default difficulty

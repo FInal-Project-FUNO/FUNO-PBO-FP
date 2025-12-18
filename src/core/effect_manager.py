@@ -22,46 +22,54 @@ class CardEffect:
 
 
 class SkipEffect(CardEffect):
-    """Skip card effect"""
-    
     def apply_effect(self, game_manager, player):
-        """Skip next player's turn (not used in real-time game)"""
-        game_manager.execute_skip_effect(player)
-    
+        # KONSEP FUNO: Freeze Lawan
+        opponent = game_manager.get_opponent(player)
+        # Kita butuh method 'freeze' di class Player (Lihat poin B)
+        if hasattr(opponent, 'freeze'):
+            opponent.freeze(2)
+            
     def get_effect_name(self):
-        return "Skip"
+        return "SKIP! (Enemy Frozen)"
 
 
 class ReverseEffect(CardEffect):
-    """Reverse card effect"""
-    
     def apply_effect(self, game_manager, player):
-        """Reverse play direction (not used in 2-player game)"""
-        game_manager.execute_reverse_swap(player)    
+        # KONSEP FUNO: Tukar 1 Kartu Acak
+        opponent = game_manager.get_opponent(player)
         
+        # Cek validitas tangan
+        if player.hand_size() > 0 and opponent.hand_size() > 0:
+            # Ambil index acak
+            my_idx = random.randint(0, player.hand_size() - 1)
+            opp_idx = random.randint(0, opponent.hand_size() - 1)
+            
+            # Ambil object kartu
+            my_card = player.hand[my_idx]
+            opp_card = opponent.hand[opp_idx]
+            
+            # Lakukan pertukaran
+            player.remove_card(my_card)
+            opponent.remove_card(opp_card)
+            
+            player.add_card(opp_card)
+            opponent.add_card(my_card)
+
     def get_effect_name(self):
-        return "Reverse"
+        return "REVERSE! (Card Swapped)"
 
 
 class DrawTwoEffect(CardEffect):
-    """Draw Two card effect"""
-    
     def apply_effect(self, game_manager, player):
-        pass
-    
+        pass 
     def get_effect_name(self):
-        return "point x2"
-
+        return "SCORE x2!"
 
 class WildDrawFourEffect(CardEffect):
-    """Wild Draw Four card effect"""
-    
     def apply_effect(self, game_manager, player):
-        """Force opponent to draw 4 cards"""
         pass
-    
     def get_effect_name(self):
-        return "point x4"
+        return "SCORE x4!"
 
 
 class EffectManager:

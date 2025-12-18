@@ -1,15 +1,15 @@
 import pygame
-from src.screen.base import BaseScreen
-from src.core.game_manager import GameManager
-from src.utils.constants import *
-from src.ui.deck_animation import load_deck
+from .base import BaseScreen
+from ..core.game_manager import GameManager
+from ..utils.constants import *
+from ..ui.deck_animation import load_deck
 
 class GameScreen(BaseScreen):
     def __init__(self, manager):
         super().__init__(manager)
         # 1. Inisialisasi Game Manager
-        self.game = GameManager() 
-        difficulty = getattr(manager, 'selected_difficulty', 'easy')
+        from ..utils import constants
+        difficulty = constants.CURRENT_DIFFICULTY
         print(f"[GAME] Starting with difficulty: {difficulty}")
         self.game = GameManager(difficulty=difficulty)
         
@@ -51,10 +51,29 @@ class GameScreen(BaseScreen):
         # Kita simpan main card frame sebelumnya untuk snapshot
         self.prev_main_card_snapshot = self.game.main_card
         
+        self.last_deck_count = self.game.deck.cards_remaining()
+        
         self.final_score_timer = 0
 
     def _load_assets(self):
         """Memuat semua gambar kartu"""
+        self.sounds = {}
+        try:
+            # Init mixer jika belum (biasanya sudah di main.py, tapi untuk jaga-jaga)
+            if not pygame.mixer.get_init():
+                pygame.mixer.init()
+                
+            self.sounds['play'] = pygame.mixer.Sound(SOUND_PLAY_CARD)
+            self.sounds['click'] = pygame.mixer.Sound(SOUND_BUTTON_CLICK)
+            self.sounds['draw'] = pygame.mixer.Sound(SOUND_DRAW_CARD)
+            
+            # Atur volume (Opsional)
+            self.sounds['play'].set_volume(0.5)
+            self.sounds['click'].set_volume(0.7)
+            
+        except Exception as e:
+            print(f"[WARNING] Gagal memuat suara: {e}")
+        
         for name, path in CARD_IMAGES.items():
             try:
                 game_img = pygame.image.load(BACKGROUND_PATH).convert()
@@ -101,6 +120,41 @@ class GameScreen(BaseScreen):
             
             surface.blit(image, rect)
 
+    def _draw_shimmer(self, surface, x, y, w, h):
+        """
+        Membuat efek kilau cahaya (shimmer) bergerak pada kartu.
+        """
+        # 1. Setup Dimensi
+        width = w
+        height = h
+        
+        # 2. Hitung posisi animasi berdasarkan waktu
+        # Animasi berulang setiap 1000ms (1 detik)
+        period = 1000 
+        current_time = pygame.time.get_ticks()
+        progress = (current_time % period) / period # Nilai 0.0 s/d 1.0
+        
+        # 3. Buat Surface Transparan khusus untuk Shimmer
+        shimmer_surf = pygame.Surface((width, height), pygame.SRCALPHA)
+        
+        # 4. Gambar Pita Cahaya
+        # Pita bergerak dari kiri (-width) ke kanan (+width)
+        band_width = 40 
+        start_x = -band_width + (width + band_width * 2) * progress
+        shimmer_color = (255, 255, 255, 120) 
+        
+        points = [
+            (start_x, 0),                 
+            (start_x + band_width, 0),    
+            (start_x + band_width - 20, height), 
+            (start_x - 20, height)        
+        ]
+        
+        pygame.draw.polygon(shimmer_surf, shimmer_color, points)
+        
+        # 5. Blit (Tempel) ke kartu
+        surface.blit(shimmer_surf, (x, y), special_flags=pygame.BLEND_RGBA_ADD)
+        
     def handle_events(self, event):
         if self.input_locked:
             return
@@ -118,6 +172,8 @@ class GameScreen(BaseScreen):
                         # Validasi: Hanya boleh pilih warna yang ada di tangan
                         if color_name in available_colors:
                             # EKSEKUSI FINAL: Mainkan kartu dengan warna pilihan
+                            if 'click' in self.sounds:
+                                self.sounds['click'].play()
                             try:
                                 self.game.resolve_wild_color(color_name)
                                 self.selected_card_index = None
@@ -181,18 +237,27 @@ class GameScreen(BaseScreen):
             self.game.update_ai()
             
             current_last_played = self.game.last_played_card
-            
-            if current_last_played != self.last_seen_played_card:
-                # Wow, ada pergerakan baru!
+            just_played_card = (current_last_played != self.last_seen_played_card)
+            if just_played_card:
+                # --- PLAY SOUND (Prioritas Utama) ---
+                if 'play' in self.sounds:
+                    self.sounds['play'].play()
                 
                 # Gunakan snapshot main card frame sebelumnya (Kartu Target Lama)
                 old_main = self.prev_main_card_snapshot
-                
-                # Mulai animasi
                 self._start_transition_animation(old_main, current_last_played)
                 
                 # Update pembanding
                 self.last_seen_played_card = current_last_played
+            
+            current_deck_count = self.game.deck.cards_remaining()
+            
+            if current_deck_count < self.last_deck_count:
+                # Mainkan suara draw
+                if 'draw' in self.sounds:
+                    self.sounds['draw'].play()
+                    
+            self.last_deck_count = current_deck_count
             
             # Simpan snapshot main card saat ini untuk frame berikutnya
             self.prev_main_card_snapshot = self.game.main_card
@@ -265,11 +330,39 @@ class GameScreen(BaseScreen):
         
         if num_cards > 0:
             card_spacing = 100
-            start_x = (SCREEN_WIDTH -750)
+            start_x = (SCREEN_WIDTH - 750)
+            mx, my = pygame.mouse.get_pos()
+            
             for i, card in enumerate(player_cards):
                 card_x = start_x + (i * card_spacing)
                 card_y = SCREEN_HEIGHT - CARD_HEIGHT - 25
-                self.draw_card_image(surface, card, card_x, card_y, i == self.selected_card_index)
+                default_y = card_y
+                
+                temp_rect = pygame.Rect(card_x, default_y, CARD_WIDTH, CARD_HEIGHT)
+                if temp_rect.collidepoint(mx, my):
+                    card_y -= 15
+                
+                # Logic Highlight
+                is_selected = (i == self.selected_card_index)
+                
+                # Logic Winning Pair
+                is_winning_pair = False
+                if self.game.game_over and (i in self.game.final_winning_indices):
+                    is_winning_pair = True
+                
+                # 1. Gambar Kartu Dasarnya
+                self.draw_card_image(surface, card, card_x, card_y, selected=is_selected)
+                
+                # if is_winning_pair:
+                if is_winning_pair:
+                    # --- LOGIC AGAR TIDAK KEGEDEAN ---                   
+                    shimmer_w = CARD_WIDTH * 0.6
+                    shimmer_h = CARD_HEIGHT * 0.85
+                    shimmer_x = card_x + (CARD_WIDTH - shimmer_w) / 2
+                    shimmer_y = card_y + (CARD_HEIGHT - shimmer_h) / 1.65
+                    
+                    # Panggil fungsi dengan ukuran yang sudah dikurangi padding
+                    self._draw_shimmer(surface, shimmer_x, shimmer_y, shimmer_w, shimmer_h)
 
         # 4. Draw AI Cards (Backside)
         ai_cards = self.game.ai.hand
@@ -395,10 +488,14 @@ class GameScreen(BaseScreen):
         # surface.blit(state_text, (15, 15))
         
     def _get_player_hand_colors(self):
-        """Mendapatkan set warna unik yang dimiliki player saat ini"""
         colors = set()
         for card in self.game.player.hand:
-            # Pastikan hanya mengambil warna dasar (bukan wild)
             if card.color in ['red', 'green', 'blue', 'yell']:
                 colors.add(card.color)
+        
+        # PERBAIKAN: Jika tangan kosong (setelah main Wild) atau cuma isi Wild
+        # Kembalikan semua warna agar tidak soft-lock
+        if not colors:
+            return {'red', 'green', 'blue', 'yell'}
+            
         return colors

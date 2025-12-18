@@ -1,6 +1,7 @@
 """
 Player class - Base class for human and AI players
 """
+import time
 
 class Player:
     """Base player class"""
@@ -15,6 +16,7 @@ class Player:
         self.__name = name
         self.__hand = []
         self.__score = 0
+        self.__unfreeze_time = 0
     
     # Getters (Encapsulation)
     @property
@@ -61,6 +63,14 @@ class Player:
     def get_valid_cards(self, main_card):
         """Get all valid cards that can be played"""
         return [card for card in self.__hand if card.matches(main_card)]
+    
+    def freeze(self, duration):
+        """Membekukan player selama duration detik"""
+        self.__unfreeze_time = time.time() + duration
+        
+    def is_frozen(self):
+        """Cek apakah player sedang beku"""
+        return time.time() < self.__unfreeze_time
     
     def __str__(self):
         """String representation"""
