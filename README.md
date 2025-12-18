@@ -133,18 +133,23 @@ Proyek ini menerapkan 6 pilar utama Pemrograman Berorientasi Objek:
 
 | Main Menu & Difficulty | Gameplay Action | Game Over & Scoring |
 | :---: | :---: | :---: |
-| ![Menu](path/to/image_8608e9.png) | ![Gameplay](path/to/image_86f207.png) | ![Result](path/to/image_86e625.png) |
+| ![Menu](img/main_menu.png) | ![Gameplay](img/gameplay.png) | ![Result](img/final.png) |
 | *Pilihan tingkat kesulitan adaptif* | *Visual effect shimmering & particles* | *Sistem skor detail & pairing bonus* |
 
 ---
 
 ## 🤝 Kontribusi & Credits
 
-### Tim Pengembang
-Dibuat dengan ❤️ dan ☕ untuk Tugas Akhir PBO.
+### 👥 Tim Pengembang
+Proyek ini dikembangkan secara kolaboratif untuk Tugas Akhir PBO.
 
-- **Developer**: [Nama Anda / Adit]
-- **Role**: Lead Programmer & Game Designer
+- **Muhammad Aditya Nugraha**
+  - *Role*: **Lead Programmer & Game Designer**
+  - *Responsibility*: Merancang arsitektur OOP, logika inti permainan (Game Loop), sistem AI cerdas, dan mekanisme *gameplay*.
+
+- **Royan Harits Yustanto**
+  - *Role*: **UI/UX Designer & Visual Artist**
+  - *Responsibility*: Merancang antarmuka pengguna (User Interface), membuat aset visual *Pixel Art*, dan memastikan pengalaman pengguna (UX) yang responsif.
 
 ### Aset & Referensi
 - **Font**: Pix32 (Pixel Art Font)
