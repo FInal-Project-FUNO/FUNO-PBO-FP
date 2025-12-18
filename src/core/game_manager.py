@@ -29,12 +29,13 @@ class GameManager:
         self.__is_final_condition = False
         self.__final_score_queue = []
         
+        self.__skipped_player = None
+
         # Deal initial cards
         self.__deal_initial_cards()
         # Set initial main card
         self.__set_initial_main_card()
         
-        self.__skipped_player = None
     
     # Getters (Encapsulation)
     @property
@@ -114,11 +115,6 @@ class GameManager:
         Player plays a card
         args : choose color for wild card
         """
-        # Jika Player sedang di-skip, tolak langkah (opsional, harusnya dihandle UI juga)
-        if self.__skipped_player == player:
-            # raise InvalidMoveError("You are skipped!") 
-            # Atau return saja
-            return        
         
         # 1. Validasi
         if not card.matches(self.__main_card):
@@ -134,6 +130,9 @@ class GameManager:
         points_earned = self.__calculate_dynamic_points(card, self.__main_card)
         player.add_points(points_earned)
         
+        if self.__skipped_player:
+            self.__skipped_player = None
+                    
         #Pause jika kartu Wild Card
         if card.value in WILD_CARDS and chosen_color is None and player == self.__player:
             self.__waiting_for_color = True
@@ -186,9 +185,6 @@ class GameManager:
                 self.__update_main_card()
                 self.__message = f"{player.name} +{points_earned})"
             
-            #Reset skipped player setelah giliran selesai
-            if self.__skipped_player:
-                self.__skipped_player = None
             
             # Set effect
             effect_name = self.__effect_manager.apply_effect(card, self, player)
@@ -392,6 +388,12 @@ class GameManager:
             # Syarat A: Tidak boleh Wild Card (biar warna jelas)
             if card.value in WILD_CARDS:
                 return False
+            
+            #Jika ada pemain yang di-skip, pastikan kartu bisa dimainkan oleh lawannya
+            if self.__skipped_player:
+                active_player = self.get_opponent(self.__skipped_player)
+                return any(c.matches(card) for c in active_player.hand)
+            
             # Syarat B: Harus bisa dimainkan oleh Player ATAU AI
             return self.__is_playable_by_anyone(card)
         
